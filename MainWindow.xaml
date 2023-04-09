@@ -1,0 +1,596 @@
+﻿<Window x:Class="GetFilesBySelection.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GetFilesBySelection"
+        mc:Ignorable="d"
+		Loaded="scannermain_Loaded"
+		WindowChrome.ResizeGripDirection="BottomRight"
+		ResizeMode="CanResizeWithGrip"
+		ShowActivated="True"
+		x:Name="scannermain"
+		Background="{StaticResource Cyan1}"
+        Title="Files Scanner  - Control System (by Ian Turner 4/2023)" Height="450" Width="1200" MinWidth="900">
+	<Window.Resources>
+		
+		<!--#region Styles-->
+		<Style x:Key="_ListBoxItemStyle1" TargetType="ListBoxItem" >
+			<Setter Property="FontWeight" Value="Normal" />
+			<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+			<Setter Property="Padding" Value="10 0 0 0" />
+
+			<!--Remove focus rectangle - IT WORKS-->
+			<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="ListBoxItem">
+						<Border
+							x:Name="_Border"
+							Padding="10 3"
+							HorizontalAlignment="Stretch">
+							<ContentPresenter  
+								Width="{Binding Path=ActualWidth, RelativeSource={RelativeSource AncestorType=ListBox}}"
+								MinWidth="600"
+								HorizontalAlignment="Left"/>
+						</Border>
+						<!--This Width is crucial to keep listbox width painted correctly !!-->
+						<ControlTemplate.Triggers>
+							<!--Normal, UnSelected-->
+							<MultiTrigger>
+								<MultiTrigger.Conditions>
+									<Condition Property="IsMouseOver" Value="false" />
+									<Condition Property="IsSelected" Value="False" />
+								</MultiTrigger.Conditions>
+								<MultiTrigger.Setters>
+									<Setter Property="HorizontalAlignment" Value="Stretch" />
+									<Setter Property="HorizontalAlignment" Value="Left" />
+									<Setter Property="TextElement.Foreground" Value="{StaticResource White0}" />
+									<Setter TargetName="_Border" Property="Background" Value="{StaticResource Black4}" />
+									<Setter Property="FontWeight" Value="Regular" />
+									<Setter TargetName="_Border"  Property="Width" Value="{Binding Path=ActualWidth, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+								</MultiTrigger.Setters>
+							</MultiTrigger>
+							
+							<MultiTrigger>
+								<MultiTrigger.Conditions>
+									<Condition Property="IsMouseOver" Value="false" />
+									<Condition Property="IsSelected" Value="True" />
+								</MultiTrigger.Conditions>
+								<MultiTrigger.Setters>
+									<Setter Property="HorizontalAlignment" Value="Stretch" />
+									<Setter Property="HorizontalAlignment" Value="Left" />
+									<Setter Property="TextElement.Foreground" Value="{StaticResource Red0}" />
+									<Setter TargetName="_Border" Property="Background" Value="{StaticResource Cyan0}" />
+									<Setter TargetName="_Border"  Property="Width" Value="{Binding Path=ActualWidth, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+									<Setter Property="FontWeight" Value="Regular" />
+								</MultiTrigger.Setters>
+							</MultiTrigger>
+
+							<!--Mouseover, UnSelected-->
+							<MultiTrigger>
+								<MultiTrigger.Conditions>
+									<Condition Property="IsMouseOver" Value="true" />
+									<Condition Property="IsSelected" Value="False" />
+								</MultiTrigger.Conditions>
+								<MultiTrigger.Setters>
+									<Setter Property="HorizontalAlignment" Value="Stretch" />
+									<Setter Property="HorizontalAlignment" Value="Left" />
+									<Setter Property="TextElement.Foreground" Value="{StaticResource White0}" />
+									<Setter TargetName="_Border" Property="Background" Value="{StaticResource Red5}" />
+									<Setter Property="FontWeight" Value="Normal" />
+								</MultiTrigger.Setters>
+							</MultiTrigger>
+
+							<!--Mouseover, Selected-->
+							<MultiTrigger>
+								<MultiTrigger.Conditions>
+									<Condition Property="IsMouseOver" Value="true" />
+									<Condition Property="IsSelected" Value="true" />
+								</MultiTrigger.Conditions>
+								<MultiTrigger.Setters>
+									<Setter Property="HorizontalAlignment" Value="Stretch" />
+									<Setter Property="HorizontalContentAlignment" Value="Left" />
+									<Setter Property="TextElement.Foreground" Value="{StaticResource Black0}" />
+									<Setter TargetName="_Border" Property="Background" Value="{StaticResource Cyan0}" />
+									<Setter Property="FontWeight" Value="Normal" />
+								</MultiTrigger.Setters>
+							</MultiTrigger>
+
+							<MultiTrigger>
+								<MultiTrigger.Conditions>
+									<Condition Property="IsMouseOver" Value="false" />
+									<Condition Property="IsSelected" Value="false" />
+								</MultiTrigger.Conditions>
+								<MultiTrigger.Setters>
+									<Setter Property="HorizontalContentAlignment" Value="Left" />
+									<Setter Property="TextElement.Foreground" Value="{StaticResource White0}" />
+									<Setter TargetName="_Border" Property="Background" Value="{Binding CanDoubleClick}" />
+									<Setter Property="FontWeight" Value="Normal" />
+								</MultiTrigger.Setters>
+							</MultiTrigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+		<!--#endregion Styles-->
+		
+	</Window.Resources>
+	
+	<Grid>
+
+		<!--#region grid setup-->
+		<Grid.RowDefinitions>
+			<RowDefinition Height="30" />
+			<RowDefinition Height="30"/>
+			<RowDefinition Height="30"/>
+			<RowDefinition Height="30"/>
+			<RowDefinition Height="30"/>
+			<RowDefinition Height="30"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="60"/>
+			<RowDefinition Height="30"/>
+		</Grid.RowDefinitions>
+
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="270"/>
+			<ColumnDefinition Width="1.5*"  MinWidth="350" MaxWidth="450"/>
+			<ColumnDefinition Width="2*"/>
+		</Grid.ColumnDefinitions>
+
+		<TextBlock x:Name="Filecount" Text="Scan Results List"
+				   Grid.Row="0"
+				   Grid.Column="3"
+				   FontSize="16"
+				   Background="{StaticResource Red3}"
+				   Foreground="White"
+				   TextAlignment="Center"
+				   Padding="10 3 0 0"/>
+		<!--#endregion grid setup-->
+
+		<!--#region left side labels-->
+
+		<TextBlock Text="Default File Suffix to be identified"
+				   Grid.Row="0"
+				   FontSize="16"
+				   Background="{StaticResource Orange5}"
+				   Margin="4 0 0 0"
+				   Padding="10 3 0 0"/>
+		<TextBlock Text="Root Folder to be scanned from..."
+				   Grid.Row="1"
+				   FontSize="16"
+				   Background="{StaticResource Orange5}"
+				   Margin="4 0 0 0"
+				   Padding="10 3 0 0"/>
+		<TextBlock Text="Path/File for output"
+				   Grid.Row="2"
+				   FontSize="16"
+				   Background="{StaticResource Orange5}"
+				   Margin="4 0 0 0"
+				   Padding="10 0 0 0"/>
+		<TextBlock Text="Path/File to filetypes required"
+				   Grid.Row="3"
+				   FontSize="16"
+				   Background="{StaticResource Orange5}"
+				   Margin="4 0 0 0"
+				   Padding="10 3 0 0"/>
+		<TextBlock Text="Path/File to blocked folders"
+				   Grid.Row="4"
+				   FontSize="16"
+				   Background="{StaticResource Orange5}"
+				   Margin="4 0 0 0"
+				   Padding="10 3 0 0"/>
+
+		<!--#endregion left side labels-->
+
+		<!--#region left side textboxes-->
+
+		<TextBox x:Name="defsuffix"  Text="*.*"
+				Grid.Row="0" Grid.Column="1"
+				FontSize="18"
+				TextWrapping="NoWrap"
+				 CharacterCasing="Upper"
+				 TextAlignment="Left"				 
+			   Background="{StaticResource White3}"
+				 Foreground="Black"
+				 LostFocus="DataChanged_click"
+				ToolTipService.ToolTip="This is only used if no FILETYPES.DAT file listing one or more file types to be scanned for exists"
+				ToolTipService.HorizontalOffset="25"
+				ToolTipService.VerticalOffset="10"
+				ToolTipService.HasDropShadow="True"
+				ToolTipService.InitialShowDelay="1000"
+				ToolTipService.ShowDuration="3000"
+				 Margin="4 0 5 0"
+				Padding="5 3 0 0"/>
+				 <!--LostFocus="defsuffix_LostFocus"-->
+
+		<TextBox x:Name="rootpath"  Text="C:\WPFMAIN"
+				Grid.Row="1" Grid.Column="1"
+				FontSize="18"
+				TextWrapping="NoWrap"
+				 CharacterCasing="Upper"
+				 TextAlignment="Left"				 
+			   Background="{StaticResource White3}"
+				 Foreground="Black"
+				 LostFocus="DataChanged_click"
+				 Margin="4 0 5 0"
+				Padding="5 3 0 0"/>
+				 <!--LostFocus="rootpath_LostFocus"-->
+
+		<TextBox x:Name="outputpath"  Text="C:\WPFMAIN\OUT\ALLFILES.TXT"
+				Grid.Row="2" Grid.Column="1"
+				FontSize="18"
+				TextWrapping="NoWrap"
+				 CharacterCasing="Upper"
+				 TextAlignment="Left"				 
+			   Background="{StaticResource White3}"
+				 Foreground="Black"
+				 GotFocus="outputpath_GotFocus"
+				 LostFocus="DataChanged_click"
+				ToolTipService.ToolTip="This file will contain the full list of all files identified  by  the scan..."
+				ToolTipService.HorizontalOffset="25"
+				ToolTipService.VerticalOffset="10"
+				ToolTipService.HasDropShadow="True"
+				ToolTipService.InitialShowDelay="1000"
+				ToolTipService.ShowDuration="3000"
+				 Margin="4 0 5 0"
+				Padding="5 3 0 0" />
+				 <!--LostFocus="outputpath_LostFocus"-->
+
+		<TextBox  x:Name="typespath" Text="C:\WPFMAIN\INPUT\FILETYPES.TXT"
+				Grid.Row="3" Grid.Column="1"
+				FontSize="18"
+				 CharacterCasing="Upper"
+				TextWrapping="NoWrap"
+				 TextAlignment="Left"				 
+			   Background="{StaticResource White3}"
+				 Foreground="Black"
+				  GotFocus="typespath_GotFocus"
+				 LostFocus="DataChanged_click"
+				  ToolTipService.ToolTip="This file can contain one or more file type suffixes to be scanned for..."
+				ToolTipService.HorizontalOffset="25"
+				ToolTipService.VerticalOffset="10"
+				ToolTipService.HasDropShadow="True"
+				ToolTipService.InitialShowDelay="1000"
+				ToolTipService.ShowDuration="3000"
+				 Margin="4 0 5 0"
+				Padding="5 3 0 0"/>
+				<!--LostFocus="typespath_Lostfocus"-->
+
+		<TextBox  x:Name="blockpath" Text="C:\WPFMAIN\INPUT\BLOCKEDFOLDERS.TXT"
+				Grid.Row="4" Grid.Column="1"
+				FontSize="18"
+				 CharacterCasing="Upper"
+				TextWrapping="NoWrap"
+				 TextAlignment="Left"				 
+			   Background="{StaticResource White3}"
+				 Foreground="Black"
+				GotFocus="blockpath_GotFocus"
+				 LostFocus="DataChanged_click"
+				ToolTipService.ToolTip="This file can contain one or more Folders that are to to be ignored during the scan..."
+				ToolTipService.HorizontalOffset="25"
+				ToolTipService.VerticalOffset="10"
+				ToolTipService.HasDropShadow="True"
+				ToolTipService.InitialShowDelay="1000"
+				ToolTipService.ShowDuration="3000"
+				 Margin="4 0 5 0"
+				  Padding="5 3 0 0"/>
+				<!--LostFocus="blockpath_Lostfocus"-->
+
+		<!--#endregion left side textboxes-->
+
+		<!--#region headers-->
+
+		<TextBlock x:Name="banner1" Text="File types to be scanned for."
+				Grid.Row="5" Grid.Column="0"
+				Height="25"
+				Grid.ColumnSpan="1"
+				FontSize="18"
+				TextWrapping="NoWrap"
+				TextAlignment="Center"				 
+				Background="{StaticResource Purple3}"
+				Foreground="White"
+				GotFocus="blockpath_GotFocus"
+				Margin="4 0 2 0"
+				Padding="5 3 0 0"/>
+		<TextBlock x:Name="banner2" Text="Folders to be ignored"
+				Grid.Row="5" Grid.Column="1"
+				Grid.ColumnSpan="1"
+				Height="25"
+				FontSize="18"
+				TextWrapping="NoWrap"
+				TextAlignment="Center"				 
+				Background="{StaticResource Purple3}"
+				Foreground="White"
+				GotFocus="blockpath_GotFocus"
+				Margin="4 0 2 0"
+				Padding="5 3 0 0"/>
+
+		<!--#endregion headers-->
+
+		<!--#region data  files-->
+
+		<TextBox x:Name="filetypeslist" Text=""
+				Grid.Row="6"
+				FontSize="18"
+				Margin="4 0 4 0"
+				VerticalScrollBarVisibility="Visible"
+				CharacterCasing="Upper"
+				IsReadOnly="False"
+				Background="{StaticResource White3}"
+				LostFocus="DataChanged_click"
+				AcceptsReturn="True"
+				Padding="10 5 10 0"/>
+
+		<TextBox x:Name="blockedfolderslist"
+				Grid.Row="6" Grid.Column="1"
+				FontSize="18"
+				Margin="4 0 4 0"
+				IsReadOnly="False"
+				CharacterCasing="Upper"
+				Background="{StaticResource White3}"
+				VerticalScrollBarVisibility="Visible"
+				LostFocus="DataChanged_click"
+				AcceptsReturn="True"
+				Padding="10 5 10 0"/>
+
+		<!--#endregion data files-->
+
+		<!--#region lower  left details-->
+		<CheckBox x:Name="DoSort" 
+				  Grid.Column="1"
+				  Grid.Row="7"
+				  FontSize="20"
+				  Height="30"
+				 IsChecked="False"
+				 Click="DoSort_Click"
+				  Content="Sort Results"
+		  HorizontalAlignment="Right"
+		  Margin="0 5 180 0"/>
+
+		<CheckBox x:Name="Showfullpath" 
+				  Grid.Column="0"
+				  Grid.Row="7"
+				  FontSize="20"
+				  Height="30"
+				 IsChecked="False"
+				 Click="Showfull_Click"
+				  Content="Show Full Path"
+		  HorizontalAlignment="Left"
+		  Margin="110,18,0,12" Width="155"/>
+		<!--#endregion lower left details-->
+
+		<!--#region  Right side-->
+
+		<ListBox x:Name="FilesList" Grid.Column="2"
+				 Grid.Row="1" Grid.RowSpan="6"
+				 Background="{StaticResource Blue4}"
+				 Foreground="White"
+				 FontSize="18"
+				 VerticalAlignment="Stretch"
+				 ItemContainerStyle="{StaticResource _ListBoxItemStyle1}"
+				d:ItemsSource="{d:SampleData ItemCount=35}" />
+		
+		<!--#endregion  Right side-->
+		
+		<!--#region buttons-->
+
+		<Button x:Name="ExecuteBtn" 
+				Content="Execute Scan"
+				Click="ExecuteBtn_Click"
+				Grid.Row="7"
+				Grid.Column="1"
+				HorizontalAlignment="Right"
+				Margin="0,8,5,7"
+				Background="{StaticResource DiagonalBackgroundLightGreen}"
+				Foreground="White"
+				FontSize="20">
+			<Button.Style>
+				<Style TargetType="Button">
+					<Setter Property="Background" Value="{StaticResource DiagonalBackgroundLightGreen}"/>
+					<Setter Property="Width" Value="155"/>
+					<Setter Property="Height" Value="45"/>
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="{x:Type Button}">
+								<Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" ClipToBounds="True">
+									<!-- Outer Rectangle with rounded corners. -->
+									<Border x:Name="_border" Background="{StaticResource DiagonalBackgroundLightGreen}"
+											BorderBrush="Green"
+											BorderThickness="3"
+											CornerRadius="8">
+									</Border>
+									<!--<Rectangle x:Name="outerRectangle" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stroke="{TemplateBinding Background}" RadiusX="20" RadiusY="20" StrokeThickness="5" Fill="Transparent" />
+									-->
+									<!-- Inner Rectangle with rounded corners. -->
+									<!--
+									<Rectangle x:Name="innerRectangle" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stroke="Transparent" StrokeThickness="20" Fill="{TemplateBinding Background}" RadiusX="20" RadiusY="20" />-->
+									<!-- Present Content (text) of the button. -->
+									<DockPanel Name="myContentPresenterDockPanel">
+										<ContentPresenter x:Name="myContentPresenter" Margin="15 8 0 0" 
+												TextBlock.FontSize="20"
+												TextBlock.FontWeight="DemiBold"
+												Content="{TemplateBinding  Content}" 
+												TextBlock.Foreground="White" />
+									</DockPanel>
+								</Grid>
+								<ControlTemplate.Triggers>
+
+									<!-- Set properties when mouse pointer is over the button. -->
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Blue4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="TextElement.Foreground" TargetName="myContentPresenter" Value="{StaticResource Orange4}" />
+
+										<!-- Sets the glass opacity to 1, therefore, the  glass "appears" when user mouses over it. -->
+										<Setter Property="Border.Opacity" Value="0.8"   TargetName="_border" />
+										<!-- Makes the text slightly blurry as though you were          looking at it through blurry glass. -->
+										<!--<Setter Property="ContentPresenter.BitmapEffect"       TargetName="myContentPresenter">
+											<Setter.Value>
+												<BlurBitmapEffect Radius="1" />
+											</Setter.Value>
+										</Setter>-->
+									</Trigger>
+
+									<Trigger Property="IsEnabled" Value="False">
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Red5}" />
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Red4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="Opacity" TargetName="_border" Value="0.3" />
+										<Setter Property="Border.Opacity" Value="0.5"   TargetName="_border" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Button.Style>
+		</Button>
+		
+		<Button x:Name="CloseBtn" 
+				Content="Close"
+				Click="CloseBtn_Click"
+				Grid.Row="7"
+				Grid.Column="3"
+				Width="125"
+				Height="45"
+				HorizontalAlignment="Right"
+				Margin="0 0 20 0"
+				Background="{StaticResource DiagonalBackgroundLightRed}"
+				Foreground="White"
+				FontSize="20">
+			<Button.Style>
+				<Style TargetType="Button">
+					<Setter Property="Background" Value="{StaticResource DiagonalBackgroundLightGreen}"/>
+					<Setter Property="Width" Value="155"/>
+					<Setter Property="Height" Value="45"/>
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="{x:Type Button}">
+								<Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" ClipToBounds="True">
+									<Border x:Name="_border" Background="{StaticResource DiagonalBackgroundLightRed}"
+											BorderBrush="{StaticResource Green5}"
+											BorderThickness="3"
+											CornerRadius="8">
+									</Border>
+									<DockPanel Name="myContentPresenterDockPanel">
+										<ContentPresenter x:Name="myContentPresenter" Margin="35 8 0 0" 
+												TextBlock.FontSize="20"
+												TextBlock.FontWeight="DemiBold"
+												Content="{TemplateBinding  Content}" 
+												TextBlock.Foreground="White" />
+									</DockPanel>
+								</Grid>
+								<ControlTemplate.Triggers>
+
+									<!-- Set properties when mouse pointer is over the button. -->
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Blue4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Orange5}" />
+										<Setter Property ="TextElement.Foreground" TargetName="myContentPresenter" Value="{StaticResource White0}" />
+										<Setter Property="Border.Opacity" Value="0.8"   TargetName="_border" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Button.Style>
+
+		</Button>
+		<Button x:Name="CancelBtn" 
+				Content="Cancel"
+				Click="CancelBtn_Click"
+				Grid.Row="7"
+				Grid.Column="3"
+				Width="125"
+				Height="45"
+				HorizontalAlignment="Right"
+				Margin="0 0 160 0"
+				Background="{StaticResource DiagonalBackgroundLightRed}"
+				Foreground="White"
+				FontSize="20"
+				IsEnabled="false">
+			<Button.Style>
+				<Style TargetType="Button">
+					<Setter Property="Background" Value="{StaticResource DiagonalBackgroundLightGreen}"/>
+					<Setter Property="Width" Value="155"/>
+					<Setter Property="Height" Value="45"/>
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="{x:Type Button}">
+								<Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" ClipToBounds="True">
+									<Border x:Name="_border" Background="{StaticResource DiagonalBackgroundLightRed}"
+											BorderBrush="{StaticResource Green5}"
+											BorderThickness="3"
+											CornerRadius="8">
+									</Border>
+									<DockPanel Name="myContentPresenterDockPanel">
+										<ContentPresenter x:Name="myContentPresenter" Margin="35 8 0 0" 
+												TextBlock.FontSize="20"
+												TextBlock.FontWeight="DemiBold"
+												Content="{TemplateBinding  Content}" 
+												TextBlock.Foreground="White" />
+									</DockPanel>
+								</Grid>
+								<ControlTemplate.Triggers>
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Blue4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Orange5}" />
+										<Setter Property ="TextElement.Foreground" TargetName="myContentPresenter" Value="{StaticResource White0}" />
+										<Setter Property="Border.Opacity" Value="0.8"   TargetName="_border" />
+									</Trigger>
+									
+									<Trigger Property="IsEnabled" Value="False">
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Red5}" />
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Red4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="Opacity" TargetName="_border" Value="0.3" />
+										<Setter Property="Border.Opacity" Value="0.5"   TargetName="_border" />
+									</Trigger>
+
+									<Trigger Property="IsEnabled" Value="False">
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Red5}" />
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Red4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="Opacity" TargetName="_border" Value="0.3" />
+										<Setter Property="Border.Opacity" Value="0.5"   TargetName="_border" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Button.Style>
+		</Button>
+		<Button x:Name="SaveDataBtn" 
+			  Content="Save Control Files"
+			  Click="ExecuteBtn_Click"
+			  Grid.Row="7"
+			  Width="200"
+			  Height="45"
+			  HorizontalAlignment="Left"
+			  Margin="8,8,0,7"
+			  Background="{StaticResource DiagonalBackgroundLightGreen}"
+			  Foreground="White"
+			  FontSize="20"
+				Visibility="Hidden"/>
+		
+		<!--#endregion buttons-->		
+
+		<TextBlock x:Name="InfoPanel" Text=""
+				   Grid.Row="8"
+				   Grid.ColumnSpan="3"
+				   FontSize="16"
+				   Background="{StaticResource Red5}"
+				   Foreground="White"
+				   TextAlignment="Center"
+				   Padding="10 3 0 0"/>
+
+
+	</Grid>
+</Window>
