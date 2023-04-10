@@ -10,7 +10,7 @@
 		ResizeMode="CanResizeWithGrip"
 		ShowActivated="True"
 		x:Name="scannermain"
-		Background="{StaticResource Cyan1}"
+		Background="{StaticResource Black4}"
         Title="Files Scanner  - Control System (by Ian Turner 4/2023)" Height="450" Width="1200" MinWidth="900">
 	<Window.Resources>
 		
@@ -192,8 +192,9 @@
 				TextWrapping="NoWrap"
 				 CharacterCasing="Upper"
 				 TextAlignment="Left"				 
-			   Background="{StaticResource White3}"
+				   Background="{StaticResource Yellow1}"
 				 Foreground="Black"
+				  CaretBrush="{StaticResource Black0}"
 				 LostFocus="DataChanged_click"
 				ToolTipService.ToolTip="This is only used if no FILETYPES.DAT file listing one or more file types to be scanned for exists"
 				ToolTipService.HorizontalOffset="25"
@@ -211,8 +212,9 @@
 				TextWrapping="NoWrap"
 				 CharacterCasing="Upper"
 				 TextAlignment="Left"				 
-			   Background="{StaticResource White3}"
+				   Background="{StaticResource Yellow1}"
 				 Foreground="Black"
+				  CaretBrush="{StaticResource Black0}"
 				 LostFocus="DataChanged_click"
 				 Margin="4 0 5 0"
 				Padding="5 3 0 0"/>
@@ -224,8 +226,9 @@
 				TextWrapping="NoWrap"
 				 CharacterCasing="Upper"
 				 TextAlignment="Left"				 
-			   Background="{StaticResource White3}"
+				   Background="{StaticResource Yellow1}"
 				 Foreground="Black"
+				  CaretBrush="{StaticResource Black0}"
 				 GotFocus="outputpath_GotFocus"
 				 LostFocus="DataChanged_click"
 				ToolTipService.ToolTip="This file will contain the full list of all files identified  by  the scan..."
@@ -244,8 +247,9 @@
 				 CharacterCasing="Upper"
 				TextWrapping="NoWrap"
 				 TextAlignment="Left"				 
-			   Background="{StaticResource White3}"
+				   Background="{StaticResource Yellow1}"
 				 Foreground="Black"
+				  CaretBrush="{StaticResource Black0}"
 				  GotFocus="typespath_GotFocus"
 				 LostFocus="DataChanged_click"
 				  ToolTipService.ToolTip="This file can contain one or more file type suffixes to be scanned for..."
@@ -264,8 +268,9 @@
 				 CharacterCasing="Upper"
 				TextWrapping="NoWrap"
 				 TextAlignment="Left"				 
-			   Background="{StaticResource White3}"
+				   Background="{StaticResource Yellow1}"
 				 Foreground="Black"
+				  CaretBrush="{StaticResource Black0}"
 				GotFocus="blockpath_GotFocus"
 				 LostFocus="DataChanged_click"
 				ToolTipService.ToolTip="This file can contain one or more Folders that are to to be ignored during the scan..."
@@ -321,7 +326,7 @@
 				Background="{StaticResource White3}"
 				LostFocus="DataChanged_click"
 				AcceptsReturn="True"
-				Padding="10 5 10 0"/>
+				Padding="10 5 10 8"/>
 
 		<TextBox x:Name="blockedfolderslist"
 				Grid.Row="6" Grid.Column="1"
@@ -333,7 +338,7 @@
 				VerticalScrollBarVisibility="Visible"
 				LostFocus="DataChanged_click"
 				AcceptsReturn="True"
-				Padding="10 5 10 0"/>
+				Padding="10 5 10 8"/>
 
 		<!--#endregion data files-->
 
@@ -343,6 +348,7 @@
 				  Grid.Row="7"
 				  FontSize="20"
 				  Height="30"
+				  Foreground="White"
 				 IsChecked="False"
 				 Click="DoSort_Click"
 				  Content="Sort Results"
@@ -354,6 +360,7 @@
 				  Grid.Row="7"
 				  FontSize="20"
 				  Height="30"
+				  Foreground="White"
 				 IsChecked="False"
 				 Click="Showfull_Click"
 				  Content="Show Full Path"
@@ -369,7 +376,9 @@
 				 Foreground="White"
 				 FontSize="18"
 				 VerticalAlignment="Stretch"
+				 MouseDoubleClick="FilesList_MouseDoubleClick"
 				 ItemContainerStyle="{StaticResource _ListBoxItemStyle1}"
+				 Padding="0 0 0 5"
 				d:ItemsSource="{d:SampleData ItemCount=35}" />
 		
 		<!--#endregion  Right side-->

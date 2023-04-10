@@ -8,11 +8,14 @@ using System . Linq;
 using System . Reflection;
 using System . Text;
 using System . Threading;
+using System . Threading . Tasks;
 using System . Windows;
 using System . Windows . Controls;
 using System . Windows . Input;
 using System . Windows . Media;
 using System . Windows . Media . TextFormatting;
+
+using SortSupportLib;
 
 using static GetFilesBySelection . LoadFilesIteratively;
 
@@ -27,6 +30,10 @@ namespace GetFilesBySelection
         public static bool Showfull = false;
         public bool ISLOADING = true;
         public bool DOPAUSE { get; set; } = false;
+        public static List<string> FulldirectoriesList { get; set; } = new List<string> ( );
+        public static ListBox fileslistbox { get; set; }
+        public static string Rootpath { get; set; }
+
         //
         #region PropertyChanged
         //##########################//
@@ -47,20 +54,16 @@ namespace GetFilesBySelection
         //@@@@@@@@@@@@@@@@@@//
         #endregion PropertyChanged
         //@@@@@@@@@@@@@@@@@@//
-        // private string  DirInfoText;
-        //public string dirinfotext
-        //{
-        //    get { return DirInfoText; }
-        //    set { DirInfoText = value; OnPropertyChanged ( nameof ( dirinfotext ) ); }
-        //}
 
-        public static TextBlock panelinfo { get; set; } = new TextBlock ( );
+        public static TextBlock panelinfo { get; set; }
+        public static ListBox fileList { get; set; }
+
+        // public static Window window { get; set; }
         public MainWindow ( )
         {
             this . DataContext = this;
             InitializeComponent ( );
-            LoadFilesIteratively . UpdateDirList += new EventHandler<UpdateArgs> ( DoUpdateDir );
-            panelinfo = panelinfo;
+            //LoadFilesIteratively . UpdateDirList += new EventHandler<UpdateArgs> ( DoUpdateDir );
         }
         private void scannermain_Loaded ( object sender , RoutedEventArgs e )
         {
@@ -87,6 +90,7 @@ namespace GetFilesBySelection
                         defsuffix . UpdateLayout ( );
                     }
                 }
+                fileslistbox = FilesList;
             }
             else
             {
@@ -105,6 +109,9 @@ namespace GetFilesBySelection
                 else
                     MessageBox . Show ( $"The blocked Folders list {blockpath . Text . ToUpper ( )} does not exist ?" );
             }
+            panelinfo = InfoPanel;
+            fileList = FilesList;
+            LoadFilesIteratively . UpdateDirList += new EventHandler<UpdateArgs> ( DoUpdateDir );
             ISLOADING = false;
         }
         private string StripTrailingLinefeeds ( string input )
@@ -130,8 +137,8 @@ namespace GetFilesBySelection
         {
             if ( DOPAUSE == true )
                 LoadFilesIteratively . DoQuit ( );
-            //activedirectories . Text = args . dirname;
-            //activedirectories . UpdateLayout ( );
+            InfoPanel . Text = args . dirname;
+            InfoPanel . UpdateLayout ( );
             //Thread . Sleep ( 20 );
         }
 
@@ -298,20 +305,20 @@ namespace GetFilesBySelection
             {
                 //********************************************************************************//
                 string [ ] validfile = new string [ 1 ];
-                validfile [ 0 ] = defsuffix . Text;    
+                validfile [ 0 ] = defsuffix . Text;
                 allresults = lfi . GetSelectedFilesList ( validfile , InfoPanel , args );
                 //********************************************************************************//
             }
             else
             {
                 //********************************************************************************//
-                string [ ] validfile = File . ReadAllLines( typespath . Text );
+                string [ ] validfile = File . ReadAllLines ( typespath . Text );
                 validfile [ 0 ] = defsuffix . Text;
                 allresults = lfi . GetSelectedFilesList ( validfile , InfoPanel , args );
                 //********************************************************************************//
             }
 
-            List<string> alldirs = LoadFilesIteratively . FulldirectoriesList;
+            List<string> alldirs = FulldirectoriesList;
 
             Debug . WriteLine ( $"All done {allresults . Length} files identified..." );
             FilesList . ItemsSource = null;
@@ -321,12 +328,12 @@ namespace GetFilesBySelection
             InfoPanel . Text = $"{FilesList . Items . Count} files (sorted alphabetically) from {FulldirectoriesList . Count} folders identified matching your specifications...";
             InfoPanel . Background = FindResource ( "Green5" ) as SolidColorBrush;
             InfoPanel . Foreground = FindResource ( "White0" ) as SolidColorBrush;
-            int dircount = FulldirectoriesList.Count;
+            int dircount = FulldirectoriesList . Count;
             CancelBtn . IsEnabled = false;
             ExecuteBtn . IsEnabled = true;
             CloseBtn . IsEnabled = true;
             Mouse . OverrideCursor = Cursors . Arrow;
-            Debug . WriteLine ( $"Duplicates found = {LoadFilesIteratively . duplicates . Count}");
+            Debug . WriteLine ( $"Duplicates found = {LoadFilesIteratively . duplicates . Count}" );
         }
         private static MessageBoxResult ShowErrorMsg ( string msg , MessageBoxButton mbtn )
         {
@@ -340,9 +347,34 @@ namespace GetFilesBySelection
         private void DoSort_Click ( object sender , RoutedEventArgs e )
         {
             if ( DoSort . IsChecked == true )
+            {
+                if ( FilesList . Items . Count > 0 )
+                {
+                    Mouse . OverrideCursor = Cursors . Wait;
+                    string [ ] sorting = new string [ FilesList . Items . Count ];
+                    for ( int x = 0 ; x < FilesList . Items . Count ; x++ )
+                    { sorting [ x ] = FilesList . Items [ x ] . ToString ( ); }
+                    Array . Sort ( sorting , new SortString ( ) );
+                    FilesList . ItemsSource = sorting;
+                    FilesList . UpdateLayout ( );
+                    InfoPanel . Text = "Results have been sorted into Alpabetical order for you..";
+                    InfoPanel . Background = FindResource ( "Red3" ) as SolidColorBrush;
+                    InfoPanel . Foreground = FindResource ( "White0" ) as SolidColorBrush;
+                    Mouse . OverrideCursor = Cursors . Arrow;
+                }
                 DoSorting = true;
+            }
             else
+            {
+                if ( FilesList . Items . Count > 0 )
+                {
+                    InfoPanel . Text = "Sorry, CANNOT UNSORT from Alpabetical order. Run Scan again with this option unchecked ..";
+                    InfoPanel . Background = FindResource ( "Red3" ) as SolidColorBrush;
+                    InfoPanel . Foreground = FindResource ( "White0" ) as SolidColorBrush;
+                    PlayErrorBeep ( );
+                }
                 DoSorting = false;
+            }
         }
 
         private void CancelBtn_Click ( object sender , RoutedEventArgs e )
@@ -436,9 +468,9 @@ namespace GetFilesBySelection
                     if ( tmp [ 0 ] != defsuffix . Text )
                     {
                         bool found = false;
-                        for(int x = 0 ; x < tmp.Length ; x++ )
+                        for ( int x = 0 ; x < tmp . Length ; x++ )
                         {
-                            if ( tmp [x] == defsuffix.Text )
+                            if ( tmp [ x ] == defsuffix . Text )
                             {
                                 found = true;
                                 break;
@@ -460,6 +492,7 @@ namespace GetFilesBySelection
                         MessageBox . Show ( "The root path for the next scan does not exist !\n\nPlease enter a valid path" , "Invalid Path" , MessageBoxButton . OK , MessageBoxImage . Stop );
                         return;
                     }
+                    Rootpath = rootpath.Text;
                 }
                 else if ( tb . Name . ToLower ( ) == "outputpath" )
                 {
@@ -472,6 +505,14 @@ namespace GetFilesBySelection
                 else if ( tb . Name . ToLower ( ) == "typespath" )
                 {
                     ////// file types FIELD changed - update list
+                    if ( typespath . Text == "" )
+                    {
+                        filetypeslist . Text = "";
+                        filetypeslist . UpdateLayout ( );
+                        defsuffix . Text = "*.*";
+                        defsuffix . UpdateLayout ( );
+                        return;
+                    }
                     if ( File . Exists ( typespath . Text ) == false )
                     {
                         if ( typespath . Text != "" )
@@ -518,7 +559,7 @@ namespace GetFilesBySelection
                     {
                         // loosing focus , check defaullt suffix
                         bool found = false;
-                        string[] tmp3 = filetypeslist . Text .Split ( "\r\n" );
+                        string [ ] tmp3 = filetypeslist . Text . Split ( "\r\n" );
                         foreach ( var item in tmp3 )
                         {
                             if ( defsuffix . Text == item )
@@ -534,7 +575,7 @@ namespace GetFilesBySelection
                             return;
                         }
                         // update files list file- JIC
-                        File . WriteAllText ( typespath.Text ,  filetypeslist.Text );
+                        File . WriteAllText ( typespath . Text , filetypeslist . Text );
                     }
                     // the file types list may have been changed - update top default suffix field as top of the list entry- WORKING
                     string [ ] tmp = filetypeslist . Text . Split ( "\r\n" );
@@ -558,43 +599,6 @@ namespace GetFilesBySelection
                     }
                 }
             }
-
-            //{
-            //    TextBox tbx = sender as TextBox;
-            //    if ( tbx != null )
-            //    {
-            //        if ( tbx . Name . ToLower ( ) == "filetypeslist" )
-            //        {
-            //            // the file types list has been changed - update top field
-            //            string [ ] tmp = filetypeslist . Text . Split ( "\n" );
-            //            defsuffix . Text = tmp [ 0 ] . Substring ( 0 , tmp [ 0 ] . Length - 1 );
-            //            defsuffix . UpdateLayout ( );
-            //        }
-            //        else if ( tbx . Name . ToLower ( ) == "blockedfolderslist" )
-            //        {
-            //            MessageBox . Show ( "Changes made to Blocked Folders Control File have been saved for you." , "Scan Control Files" );
-            //            // theblocked folders list has been changed 
-            //            //string [ ] tmp = blockedfolderslist . Text . Split ( "\n" );
-            //            //defsuffix . Text = tmp [ 0 ] . Substring ( 0 , tmp [ 0 ] . Length - 1 );
-            //            //defsuffix . UpdateLayout ( );
-            //        }
-            //    }
-            //}
-            //updated = false;
-            //if ( File . Exists ( blockpath . Text ) == false )
-            //{
-            //    MessageBox . Show ( $"The \"Files to be blocked\" file {outputpath . Text . ToUpper ( )} cannot be found ?.\n\nPlease check it is a valid path, or remove the reference altogether,  and try again?" , "Invalid fille name/path" );
-            //    return;
-            //}
-            //string str2 = File . ReadAllText ( blockpath . Text );
-            //if ( str2 . ToUpper ( ) != blockedfolderslist . Text . ToUpper ( ) )
-            //{
-            //    blockedfolderslist . Text = StripTrailingLinefeeds ( blockedfolderslist . Text );
-            //    File . WriteAllText ( blockpath . Text , blockedfolderslist . Text );
-            //    updated = true;
-            //}
-            //if ( updated )
-            //    MessageBox . Show ( "Changes made to Control Files have been saved for you." , "Scan Control Files" );
         }
         public static string ReverseString ( string input )
         {
@@ -607,9 +611,86 @@ namespace GetFilesBySelection
         private void Showfull_Click ( object sender , RoutedEventArgs e )
         {
             if ( Showfullpath . IsChecked == true )
-                Showfull= true;
+            {
+                Mouse . OverrideCursor = Cursors . Wait;
+                string [ ] sorting = new string [ FilesList . Items . Count ];
+                for ( int x = 0 ; x < FilesList . Items . Count ; x++ )
+                {
+                    if ( FilesList . Items [ x ] . ToString ( ) . Contains ( rootpath . Text ) == true )
+                        break;
+                    if ( rootpath . Text . EndsWith ( "\\" ) )
+                        sorting [ x ] = rootpath . Text + FilesList . Items [ x ] . ToString ( ) . Substring ( 3 );
+                    else
+                        sorting [ x ] = rootpath . Text + "\\" + FilesList . Items [ x ] . ToString ( ) . Substring ( 4 );
+                }
+                FilesList . ItemsSource = sorting;
+                FilesList . UpdateLayout ( );
+                Mouse . OverrideCursor = Cursors . Arrow;
+                Rootpath = rootpath.Text;
+
+                Showfull = true;
+            }
             else
+            {
+                Mouse . OverrideCursor = Cursors . Wait;
+                string [ ] sorting = new string [ FilesList . Items . Count ];
+                for ( int x = 0 ; x < FilesList . Items . Count ; x++ )
+                {
+                    if ( FilesList . Items [ x ] . ToString ( ) . Contains ( rootpath . Text ) == false )
+                        break;
+                    sorting [ x ] = "..." + FilesList . Items [ x ] . ToString ( ) . Substring ( rootpath . Text . Length , FilesList . Items [ x ] . ToString ( ) . Length - rootpath . Text . Length );
+                }
+                FilesList . ItemsSource = sorting;
+                FilesList . UpdateLayout ( );
                 Showfull = false;
+                Rootpath = rootpath . Text;
+                Mouse . OverrideCursor = Cursors . Arrow;
+            }
+        }
+        public static void PlayErrorBeep ( int freq = 280 , int count = 100 , int repeat = 1 )
+        {
+            //List<Task<bool>> list = new List<Task<bool>> ( );
+            Dobeep ( 320 , 300 );
+            Dobeep ( 260 , 800 );
+            return;
+        }
+        public static void Dobeep ( int freq , int duration )
+        {
+            Console . Beep ( freq , duration );
+            //return true;
+        }
+        public string GetFullFileName ( int index )
+        {
+            string file = "";
+            FilesList . SelectedIndex += index;
+            file = FilesList . SelectedItem . ToString ( );
+            if ( file . Contains ( "..." ) && RootPath . Contains ( "\\" ) == true )
+                file = RootPath + file;
+            else if ( file . Contains ( "..." ) )
+                file = RootPath + "\\" + file;
+            return file;
+        }
+        private void FilesList_MouseDoubleClick ( object sender , MouseButtonEventArgs e )
+        {
+            string file = fileslistbox . SelectedItem . ToString ( );
+            if ( Rootpath == null || Rootpath == "" )
+            {
+                Rootpath = rootpath . Text;
+            }
+            file = GetFileforViewer ( file );
+            FileBrowser sfb = new FileBrowser ( file );
+            sfb . Show ( );
+        }
+        public static string GetFileforViewer (string file )
+        {
+            if ( file . Contains ( "..." ) == true )
+            {
+                if ( Rootpath . EndsWith ( "\\" ) )
+                    file = Rootpath + file . Substring ( 5 );
+                else
+                    file = Rootpath + "\\" + file . Substring ( 5 );
+            }
+            return file;
         }
     }
 }

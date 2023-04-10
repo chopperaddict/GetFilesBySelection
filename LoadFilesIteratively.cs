@@ -4,9 +4,11 @@ using System . ComponentModel;
 using System . Diagnostics;
 using System . IO;
 using System . Text;
+using System . Threading . Tasks;
 using System . Windows;
 using System . Windows . Controls;
 using System . Windows . Input;
+using System . Windows . Threading;
 
 using SortSupportLib;
 
@@ -75,7 +77,7 @@ namespace GetFilesBySelection
         public static List<string> FullPathFileNameList { get; set; } = new ( );
         public static string [ ] AllFileNames = new string [ 1000 ];
         public static List<string> FullfilesList { get; set; } = new List<string> ( );
-        public static List<string> FulldirectoriesList { get; set; } = new List<string> ( );
+//        public static List<string> FulldirectoriesList { get; set; } = new List<string> ( );
         public static string? buffer { get; set; }
 
         public static string defaultsuffix = "*.cs";
@@ -260,13 +262,20 @@ namespace GetFilesBySelection
                     blockdirs [ 0 ] = "";
             }
 
-            LoadFilesIteratively lf = new ( );
+            //LoadFilesIteratively lf = new ( );
             FullPathFileNameList . Clear ( );
-            FulldirectoriesList . Clear ( );
+            MainWindow.FulldirectoriesList . Clear ( );
             Mouse . OverrideCursor = Cursors . Wait;
 
+            //Task task = Task . Run ( ( ) =>
+            //{
+            //    Application.Current. Dispatcher . Invoke ( async ( ) =>
+            //    {
+            FullPathFileNameList = LoadAllFiles ( outpath , argstring , validtypes , blockdirs );
+            //    } );
+            //} );
             //*************************************************************************************************//
-            FullPathFileNameList = lf . LoadAllFiles ( outpath , argstring , validtypes , blockdirs );
+            //            FullPathFileNameList = LoadAllFiles ( outpath , argstring , validtypes , blockdirs );
             //*************************************************************************************************//
 
             string resultsfile = @$"{FullOutputPath}";
@@ -347,6 +356,7 @@ namespace GetFilesBySelection
             if ( rootpath . Length == 0 )
             {
                 return FullPathFileNameList;
+                //    FullPathFileNameList;
             }
             else
             {
@@ -360,7 +370,7 @@ namespace GetFilesBySelection
                     searchfile = GetFilenameFromPath ( RootPath . Trim ( ) , out filepath );
                     AllFileNames [ 0 ] = RootPath;
                     FullPathFileNameList . Add ( RootPath );
-                    Debug . WriteLine ( $"" );
+                    //Debug . WriteLine ( $"" );
                     // PATH+NAME of only file in array
                     pathfilename = RootPath;
                     TotalFiles = 1;
@@ -381,18 +391,18 @@ namespace GetFilesBySelection
                         //******************************************************************//
                         counter = DoLoadAllFiles ( RootPath , item , blockdirs );
                         //******************************************************************//
-                        Debug . WriteLine ( $"En Route with {item} : total files = {FullPathFileNameList . Count}" );
+                        //Debug . WriteLine ( $"En Route with {item} : total files = {FullPathFileNameList . Count}" );
 
                         TotalFiles += counter;
-                        Debug . WriteLine ( $"counter = {counter},  after {item} = {TotalFiles} / {FullPathFileNameList . Count}, iterations = {WalkIterationcount}" );
                         WalkIterationcount++;
+                        //Debug . WriteLine ( $"counter = {counter},  after {item} = {TotalFiles} / {FullPathFileNameList . Count}, iterations = {WalkIterationcount}" );
                     }
                 }
                 Console . WriteLine ( $"Returning a  total of {FullPathFileNameList . Count} valid matching files" );
                 // FINAL RESULT - RETURN TO CALLER AS LIST<STRING>
                 //foreach ( var item in FullPathFileNameList )
                 //{
-                Debug . WriteLine ( $"Final : total files = {FullPathFileNameList . Count}" );
+                //Debug . WriteLine ( $"Final : total files = {FullPathFileNameList . Count}" );
                 //}
                 return FullPathFileNameList;
 
@@ -408,6 +418,8 @@ namespace GetFilesBySelection
             FileInfo [ ] files = new FileInfo [ 1 ];
             DirectoryInfo [ ] subDirs = new DirectoryInfo [ 1 ];
             filespec = filetype;
+            if ( filespec == "" )
+                return 0;
             // First, process all the files directly under this folder
             // or the  current folder when iterating
             try
@@ -415,6 +427,9 @@ namespace GetFilesBySelection
                 bool isok = true;
                 int counter = 0;
                 files = root . GetFiles ( filespec );
+
+                Debug . WriteLine ( $"Parsing {root} for {filespec}..." );
+     //           Debug . Assert ( root . FullName.Contains ( "Batchfiles" ) == false);
                 foreach ( FileInfo item in files )
                 {
                     isok = true;
@@ -429,6 +444,9 @@ namespace GetFilesBySelection
                                 // Check for duplicates
                                 //string balname = "..." + item . FullName . Substring ( RootPath . Length + 3 );
                                 counter = AddFilesToList ( item . FullName , ref filesindex );
+                                MainWindow . fileList . Items . Add ( item . FullName );
+                                MainWindow . fileList . SelectedIndex = MainWindow . fileList . Items . Count - 1;
+                                MainWindow . fileList . UpdateLayout ( );
                                 totalfiles += counter;
                             }
                             else
@@ -506,8 +524,10 @@ namespace GetFilesBySelection
                 subDirs = root . GetDirectories ( );
                 DirectoryCount += subDirs . Length;
                 string [ ] AllDirs = StripBlockedFolders ( subDirs , blockdirs );
-                foreach ( DirectoryInfo dirinfo in subDirs )
-                {
+//                foreach ( DirectoryInfo dirinfo in subDirs )
+                    for(int x = 0 ; x< subDirs .Length ;x++ )
+                    {
+                    DirectoryInfo dirinfo = subDirs [ x ];
                     string dirs = dirinfo . FullName . ToUpper ( );
                     if ( DOSTOP == true ) break;
 
@@ -516,11 +536,28 @@ namespace GetFilesBySelection
                         //trigger event
                         if ( UpdateDirList != null )
                         {
+
                             UpdateArgs mea = new UpdateArgs ( );
                             mea . dirname = dirs;
                             UpdateDirList ( this , mea );
                         }
-                        FulldirectoriesList . Add ( dirs );
+                        //Task task = Task . Run ( ( ) =>
+                        //{
+                        //Application . Current . Dispatcher . Invoke ( ( ) =>
+                        //{
+                        MainWindow . panelinfo . Text = dirs;
+                        MainWindow . panelinfo . UpdateLayout ( );
+                        MainWindow . fileList . Items . Add ( dirs );
+                        //} );
+                        //} );
+
+
+                        //UpdateArgs mea = new UpdateArgs ( );
+                        //mea . dirname = dirs;
+                        // UpdateDirList ( this , mea );
+                        //}
+                        MainWindow . FulldirectoriesList . Add ( dirs );
+                        MainWindow . fileList . UpdateLayout ( );
 
                         //****************************************************//
                         // Iterate around again
@@ -531,7 +568,7 @@ namespace GetFilesBySelection
                 }
             }
             catch ( Exception ex )
-            {    Debug . WriteLine ( $"!!  {ex.Message}" ); }
+            { Debug . WriteLine ( $"!!  {ex . Message}" ); }
             return totalfiles;
         }
 
@@ -543,7 +580,7 @@ namespace GetFilesBySelection
             {
                 if ( MainWindow . Showfull == true )
                 {
-                    if ( FullPathFileNameList [ x ] . Trim ( ) . ToUpper ( ) . Contains ( fname. ToUpper ( ) ) == true )
+                    if ( FullPathFileNameList [ x ] . Trim ( ) . ToUpper ( ) . Contains ( fname . ToUpper ( ) ) == true )
                     {
                         res = true;
                         break;
@@ -626,13 +663,13 @@ namespace GetFilesBySelection
                 if ( MainWindow . Showfull )
                 {
                     FullPathFileNameList . Add ( filename );
-                    Debug . WriteLine ( $"Adding [{FullPathFileNameList . Count}] : {filename} to FullPathFileName<string>" );
+                    //Debug . WriteLine ( $"Adding [{FullPathFileNameList . Count}] : {filename} to FullPathFileName<string>" );
                 }
                 else
                 {
                     string balname = "... " + filename . Substring ( rootlength , filename . Length - rootlength );
                     FullPathFileNameList . Add ( balname );
-                    Debug . WriteLine ( $"Adding [{FullPathFileNameList . Count}] : {balname} to FullPathFileName<string>" );
+                    //Debug . WriteLine ( $"Adding [{FullPathFileNameList . Count}] : {balname} to FullPathFileName<string>" );
                 }
                 counter++;
             }
@@ -709,24 +746,14 @@ namespace GetFilesBySelection
         {
             int totfiles = 0, totalfiles = 0;
             DirectoryInfo di = new ( RootPath );
+            //Task task = Task . Run ( ( ) =>
+            //{
             WalkDirectoryTree ( di , filetype , ref totfiles , blockdirs );
             totalfiles += totfiles;
             if ( totalfiles == 0 )
             {
                 return 0;
             }
-            //FilesArray mirrors AllFilesList, BUT it holds the file name only
-            // whereas AllFilesList holds  fully qualified path+name
-            //string [ ] tmparray = new string [ TotalFiles ];
-            //for ( int i = 0 ; i < TotalFiles ; i++ )
-            //    tmparray [ i ] = AllFileNames [ i ];
-            //// list of file names only
-            //AllFileNames = tmparray;
-
-            // list of Path+file names  ?????
-            // pathfilename = FullPathFileNameList [ 0 ];
-            //           int totalfiles = FullPathFileNameList . Count;
-            //            searchpath = di . FullName;
             return totalfiles;
         }
 #pragma warning restore CA1822
