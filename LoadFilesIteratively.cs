@@ -98,6 +98,7 @@ namespace GetFilesBySelection
         // List<Tuple<int , string , string>> DebugErrors { get; set; }  = new ( );
 
 #pragma warning restore CA2211
+
         #region PropertyChanged
         //##########################//
         public event PropertyChangedEventHandler? PropertyChanged;

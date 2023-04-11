@@ -33,6 +33,9 @@ namespace GetFilesBySelection
         public static List<string> FulldirectoriesList { get; set; } = new List<string> ( );
         public static ListBox fileslistbox { get; set; }
         public static string Rootpath { get; set; }
+        public FileBrowser Filebrowser { get; set; }
+        public SearchWin Searchwin { get; set; }
+        public MainWindow Mainwindow { get; set; }
 
         //
         #region PropertyChanged
@@ -63,7 +66,7 @@ namespace GetFilesBySelection
         {
             this . DataContext = this;
             InitializeComponent ( );
-            //LoadFilesIteratively . UpdateDirList += new EventHandler<UpdateArgs> ( DoUpdateDir );
+            SetupWindowDrag ( this );
         }
         private void scannermain_Loaded ( object sender , RoutedEventArgs e )
         {
@@ -114,6 +117,14 @@ namespace GetFilesBySelection
             LoadFilesIteratively . UpdateDirList += new EventHandler<UpdateArgs> ( DoUpdateDir );
             ISLOADING = false;
         }
+
+        private void DoUpdateDir ( object? sender , UpdateArgs e )
+        {
+            if ( DOPAUSE == true )
+                LoadFilesIteratively . DoQuit ( );
+            InfoPanel . Text = e . dirname;
+            InfoPanel . UpdateLayout ( );
+        }
         private string StripTrailingLinefeeds ( string input )
         {
             string reversed = ReverseString ( input );
@@ -133,25 +144,6 @@ namespace GetFilesBySelection
             input += "\r\n";
             return input;
         }
-        private void DoUpdateDir ( object sender , UpdateArgs args )
-        {
-            if ( DOPAUSE == true )
-                LoadFilesIteratively . DoQuit ( );
-            InfoPanel . Text = args . dirname;
-            InfoPanel . UpdateLayout ( );
-            //Thread . Sleep ( 20 );
-        }
-
-        //public MainWindow ( string [ ] args )
-        //{
-        //    // NOT CALLED ??
-        //    //InitializeComponent ( );
-        //    //            LoadFilesIteratively lfi = new ( );
-        //    //    LoadFilesIteratively . UpdateDirList += DoUpdateDir;
-
-        //    //lfi . GetSelectedFilesList ( this , InfoPanel ,args );
-        //}
-
 
         private void rootpath_LostFocus ( object sender , RoutedEventArgs e )
         {
@@ -193,9 +185,14 @@ namespace GetFilesBySelection
 
         private void CloseBtn_Click ( object sender , RoutedEventArgs e )
         {
-            LoadFilesIteratively lfi = new ( );
-            //            lfi . UpdateDirList -= DoUpdateDirList;
+            // cascade thru any open windows closing them
             this . Close ( );
+            if ( Searchwin != null )
+                Searchwin . Close ( );
+            if ( Filebrowser != null )
+                Filebrowser . Close ( );
+            LoadFilesIteratively . UpdateDirList -= new EventHandler<UpdateArgs> ( DoUpdateDir );
+
         }
 
         private void ExecuteBtn_Click ( object sender , RoutedEventArgs e )
@@ -672,14 +669,17 @@ namespace GetFilesBySelection
         }
         private void FilesList_MouseDoubleClick ( object sender , MouseButtonEventArgs e )
         {
-            string file = fileslistbox . SelectedItem . ToString ( );
+            if( fileslistbox . SelectedItem  == null)
+                return;
+                string file = fileslistbox . SelectedItem . ToString ( );
             if ( Rootpath == null || Rootpath == "" )
             {
                 Rootpath = rootpath . Text;
             }
             file = GetFileforViewer ( file );
-            FileBrowser sfb = new FileBrowser ( file );
-            sfb . Show ( );
+            FileBrowser sfb = new FileBrowser (this, file );
+           sfb . Show ( );
+            this.Filebrowser = sfb;
         }
         public static string GetFileforViewer (string file )
         {
@@ -691,6 +691,39 @@ namespace GetFilesBySelection
                     file = Rootpath + "\\" + file . Substring ( 5 );
             }
             return file;
+        }
+
+        public static void SetupWindowDrag ( Window inst )
+        {
+            try
+            {
+                //Handle the button NOT being the left mouse button
+                // which will crash the DragMove Fn.....
+                MouseButtonState mbs = Mouse . RightButton;
+                //Debug. WriteLine ( $"{mbs . ToString ( )}" );
+                if ( mbs == MouseButtonState . Pressed )
+                    return;
+                inst . MouseDown += delegate
+                {
+                    {
+#pragma warning disable CS0168 // The variable 'ex' is declared but never used
+                        try
+                        {
+                            inst?.DragMove ( );
+                        }
+                        catch ( Exception ex )
+                        {
+                            return;
+                        }
+#pragma warning restore CS0168 // The variable 'ex' is declared but never used
+                    }
+                };
+            }
+            catch ( Exception ex )
+            {
+                return;
+            }
+#pragma warning restore CS0168 // The variable 'ex' is declared but never used
         }
     }
 }

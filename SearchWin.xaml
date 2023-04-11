@@ -1,0 +1,343 @@
+﻿<Window x:Class="GetFilesBySelection.SearchWin"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GetFilesBySelection"
+        mc:Ignorable="d"
+		Background="{StaticResource Black4}"
+        Title="Search Window" 
+		Height="160" Width="600"		
+		MaxHeight="160" MaxWidth="600"
+		MinHeight="160" MinWidth="600" 
+		WindowStartupLocation="CenterScreen"
+		WindowStyle="None"
+		Topmost="True"
+		ShowInTaskbar="false"
+		AllowsTransparency="True">
+		<!--lower 3 lines - How to hide window frame "-->
+    <Grid>
+		
+		<!--#region grid setup-->
+		<Grid.RowDefinitions>
+			<RowDefinition Height="30"/>
+			<RowDefinition Height="60"/>
+			<RowDefinition Height="40"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="210"/>
+			<ColumnDefinition Width="300"/>
+			<ColumnDefinition Width="*"/>
+		</Grid.ColumnDefinitions>
+		<!--#endregion grid setup-->
+
+		<Border Background="{StaticResource Red5}"
+				Grid.ColumnSpan="3">
+			<TextBlock Text="Source File  Scan Utility - Search"
+					   Foreground="White"
+					   Padding="0 1 0 0"
+					   FontSize="20"
+					   TextAlignment="Center"/>
+		</Border>
+
+		<TextBlock Text="Text to be searched for :"
+			   Grid.Row="1"
+			   Margin="10 10 0 0"
+				 FontSize="18"
+			   VerticalAlignment="Top"
+			   Foreground="White"/>
+		<TextBox x:Name="searchtxt" Text="Enter search text here ..."
+				 Grid.Column="1"
+			   Grid.Row="1"
+			   Margin="5 10 5 0"
+				 Padding="10 0 0 0"
+				 FontSize="18"
+				KeyDown="SearchBtn_KeyDown"
+				 GotFocus="TextBox_GotFocus"
+				 LostFocus="TextBox_LostFocus"
+				 Foreground="{StaticResource Black6}"
+			   VerticalAlignment="Top"/>
+				 <!--KeyDown="TextBox_KeyDown"-->
+				 <!--TextChanged="TextBox_TextChanged"-->
+
+		<!--#region buttons-->
+		<Button x:Name="SearchBtn" 
+				Content="Search"
+				Click="Search_Click"
+				Grid.Row="2"
+				Grid.Column="0"
+				HorizontalAlignment="Left"
+				VerticalAlignment="Bottom"
+				Margin="10,0,0,-20"
+				Background="{StaticResource DiagonalBackgroundLightGreen}"
+				Foreground="White"
+				FontSize="20">
+			<Button.Style>
+				<Style TargetType="Button">
+					<Setter Property="Background" Value="{StaticResource DiagonalBackgroundLightGreen}"/>
+					<Setter Property="Width" Value="85"/>
+					<Setter Property="Height" Value="45"/>
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="{x:Type Button}">
+								<Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" ClipToBounds="True">
+									<!-- Outer Rectangle with rounded corners. -->
+									<Border x:Name="_border" Background="{StaticResource DiagonalBackgroundLightGreen}"
+											BorderBrush="Green"
+											BorderThickness="3"
+											CornerRadius="8">
+									</Border>
+									<DockPanel Name="myContentPresenterDockPanel">
+										<ContentPresenter x:Name="myContentPresenter" Margin="12 8 0 0" 
+												TextBlock.FontSize="20"
+												TextBlock.FontWeight="DemiBold"
+												Content="{TemplateBinding  Content}" 
+												TextBlock.Foreground="White" />
+									</DockPanel>
+								</Grid>
+								<ControlTemplate.Triggers>
+
+									<!-- Set properties when mouse pointer is over the button. -->
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Blue4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="TextElement.Foreground" TargetName="myContentPresenter" Value="{StaticResource Orange4}" />
+
+										<!-- Sets the glass opacity to 1, therefore, the  glass "appears" when user mouses over it. -->
+										<Setter Property="Border.Opacity" Value="0.8"   TargetName="_border" />
+										<!-- Makes the text slightly blurry as though you were          looking at it through blurry glass. -->
+										<!--<Setter Property="ContentPresenter.BitmapEffect"       TargetName="myContentPresenter">
+											<Setter.Value>
+												<BlurBitmapEffect Radius="1" />
+											</Setter.Value>
+										</Setter>-->
+									</Trigger>
+
+									<Trigger Property="IsEnabled" Value="False">
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Red5}" />
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Red4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="Opacity" TargetName="_border" Value="0.3" />
+										<Setter Property="Border.Opacity" Value="0.5"   TargetName="_border" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Button.Style>
+			
+		</Button>
+
+		<Button x:Name="prevBtn" 
+				Content="Previous"
+				Click="PrevBtn_Click"
+				Grid.Row="2"
+				Grid.Column="0"
+				Grid.ColumnSpan="2"
+				HorizontalAlignment="Left"
+				VerticalAlignment="Bottom"
+				Margin="105,0,0,-20"
+				Background="{StaticResource DiagonalBackgroundLightGreen}"
+				Foreground="White"
+				FontSize="20">
+			<Button.Style>
+				<Style TargetType="Button">
+					<Setter Property="Background" Value="{StaticResource DiagonalBackgroundLightGreen}"/>
+					<Setter Property="Width" Value="105"/>
+					<Setter Property="Height" Value="45"/>
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="{x:Type Button}">
+								<Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" ClipToBounds="True">
+									<!-- Outer Rectangle with rounded corners. -->
+									<Border x:Name="_border" Background="{StaticResource DiagonalBackgroundLightGreen}"
+											BorderBrush="Green"
+											BorderThickness="3"
+											CornerRadius="8">
+									</Border>
+									<DockPanel Name="myContentPresenterDockPanel">
+										<ContentPresenter x:Name="myContentPresenter" Margin="12 8 0 0" 
+												TextBlock.FontSize="20"
+												TextBlock.FontWeight="DemiBold"
+												Content="{TemplateBinding  Content}" 
+												TextBlock.Foreground="White" />
+									</DockPanel>
+								</Grid>
+								<ControlTemplate.Triggers>
+
+									<!-- Set properties when mouse pointer is over the button. -->
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Blue4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="TextElement.Foreground" TargetName="myContentPresenter" Value="{StaticResource Orange4}" />
+
+										<!-- Sets the glass opacity to 1, therefore, the  glass "appears" when user mouses over it. -->
+										<Setter Property="Border.Opacity" Value="0.8"   TargetName="_border" />
+										<!-- Makes the text slightly blurry as though you were          looking at it through blurry glass. -->
+										<!--<Setter Property="ContentPresenter.BitmapEffect"       TargetName="myContentPresenter">
+											<Setter.Value>
+												<BlurBitmapEffect Radius="1" />
+											</Setter.Value>
+										</Setter>-->
+									</Trigger>
+
+									<Trigger Property="IsEnabled" Value="False">
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Red5}" />
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Red4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="Opacity" TargetName="_border" Value="0.3" />
+										<Setter Property="Border.Opacity" Value="0.5"   TargetName="_border" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Button.Style>
+		</Button>
+
+		<Button x:Name="nextBtn" 
+				Content="Next"
+				Click="NextBtn_Click"
+				Grid.Row="2"
+				Grid.Column="0"
+				Grid.ColumnSpan="2"
+				HorizontalAlignment="Left"
+				VerticalAlignment="Bottom"
+				Margin="215,0,0,-20"
+				Background="{StaticResource DiagonalBackgroundLightGreen}"
+				Foreground="White"
+				FontSize="20">
+			<Button.Style>
+				<Style TargetType="Button">
+					<Setter Property="Background" Value="{StaticResource DiagonalBackgroundLightGreen}"/>
+					<Setter Property="Width" Value="85"/>
+					<Setter Property="Height" Value="45"/>
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="{x:Type Button}">
+								<Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" ClipToBounds="True">
+									<!-- Outer Rectangle with rounded corners. -->
+									<Border x:Name="_border" Background="{StaticResource DiagonalBackgroundLightGreen}"
+											BorderBrush="Green"
+											BorderThickness="3"
+											CornerRadius="8">
+									</Border>
+									<DockPanel Name="myContentPresenterDockPanel">
+										<ContentPresenter x:Name="myContentPresenter" Margin="16 8 0 0" 
+												TextBlock.FontSize="20"
+												TextBlock.FontWeight="DemiBold"
+												Content="{TemplateBinding  Content}" 
+												TextBlock.Foreground="White" />
+									</DockPanel>
+								</Grid>
+								<ControlTemplate.Triggers>
+
+									<!-- Set properties when mouse pointer is over the button. -->
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Blue4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="TextElement.Foreground" TargetName="myContentPresenter" Value="{StaticResource Orange4}" />
+
+										<!-- Sets the glass opacity to 1, therefore, the  glass "appears" when user mouses over it. -->
+										<Setter Property="Border.Opacity" Value="0.8"   TargetName="_border" />
+										<!-- Makes the text slightly blurry as though you were          looking at it through blurry glass. -->
+										<!--<Setter Property="ContentPresenter.BitmapEffect"       TargetName="myContentPresenter">
+											<Setter.Value>
+												<BlurBitmapEffect Radius="1" />
+											</Setter.Value>
+										</Setter>-->
+									</Trigger>
+
+									<Trigger Property="IsEnabled" Value="False">
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Red5}" />
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Red4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="Opacity" TargetName="_border" Value="0.3" />
+										<Setter Property="Border.Opacity" Value="0.5"   TargetName="_border" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Button.Style>
+		</Button>
+
+		<Button x:Name="closeBtn" 
+				Content="Close"
+				Click="CloseBtn_Click"
+				Grid.Row="2"
+				Grid.Column="0"
+				Grid.ColumnSpan="2"
+				HorizontalAlignment="Left"
+				VerticalAlignment="Bottom"
+				Margin="310,0,0,-20"
+				Background="{StaticResource DiagonalBackgroundLightRed}"
+				Foreground="White"
+				FontSize="20">
+			<Button.Style>
+				<Style TargetType="Button">
+					<Setter Property="Background" Value="{StaticResource DiagonalBackgroundLightRed}"/>
+					<Setter Property="Width" Value="85"/>
+					<Setter Property="Height" Value="45"/>
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="{x:Type Button}">
+								<Grid Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" ClipToBounds="True">
+									<!-- Outer Rectangle with rounded corners. -->
+									<Border x:Name="_border" Background="{StaticResource DiagonalBackgroundLightRed}"
+											BorderBrush="Green"
+											BorderThickness="3"
+											CornerRadius="8">
+									</Border>
+									<DockPanel Name="myContentPresenterDockPanel">
+										<ContentPresenter x:Name="myContentPresenter" Margin="16 8 0 0" 
+												TextBlock.FontSize="20"
+												TextBlock.FontWeight="DemiBold"
+												Content="{TemplateBinding  Content}" 
+												TextBlock.Foreground="White" />
+									</DockPanel>
+								</Grid>
+								<ControlTemplate.Triggers>
+
+									<!-- Set properties when mouse pointer is over the button. -->
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Blue4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
+										<Setter Property ="TextElement.Foreground" TargetName="myContentPresenter" Value="{StaticResource Orange4}" />
+
+										<!-- Sets the glass opacity to 1, therefore, the  glass "appears" when user mouses over it. -->
+										<Setter Property="Border.Opacity" Value="0.8"   TargetName="_border" />
+										<!-- Makes the text slightly blurry as though you were          looking at it through blurry glass. -->
+										<!--<Setter Property="ContentPresenter.BitmapEffect"       TargetName="myContentPresenter">
+											<Setter.Value>
+												<BlurBitmapEffect Radius="1" />
+											</Setter.Value>
+										</Setter>-->
+									</Trigger>
+
+									<Trigger Property="IsEnabled" Value="False">
+										<Setter Property ="BorderBrush" TargetName="_border" Value="{StaticResource Red5}" />
+										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Red4}" />
+										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightGreen}" />
+										<Setter Property ="Opacity" TargetName="_border" Value="0.3" />
+										<Setter Property="Border.Opacity" Value="0.5"   TargetName="_border" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Button.Style>
+		</Button>
+		
+		<!--#endregion buttons-->
+
+	</Grid>
+</Window>

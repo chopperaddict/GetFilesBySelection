@@ -29,24 +29,37 @@
 				BorderBrush="{StaticResource Red5}"
 				BorderThickness="4">
 
-			<TextBox x:Name="Sourcefile" Margin="10 5 10 5" 
+
+			<ScrollViewer x:Name="SourcefileScroller"
+				Grid.Column =" 0"
+				Grid.ColumnSpan="2"
+				HorizontalAlignment="Stretch" 
+				Margin="0 0 0 5"
+				VerticalAlignment="Stretch">
+				
+			<TextBox x:Name="Sourcefile" Margin="5 5 5 5" 
 				Grid.Column =" 0"
 				Grid.ColumnSpan="2"
 				 HorizontalAlignment="Stretch" 
 				 VerticalAlignment="Stretch"
+				 IsReadOnlyCaretVisible="true"
+				TextOptions.TextRenderingMode="ClearType"
+				TextOptions.TextHintingMode="Animated"
 				 Foreground="Black"
 				TextWrapping="NoWrap"
+				 PreviewMouseRightButtonUp="Sourcefile_PreviewMouseRightButtonUp"
 				 Padding="5 5 5 0"
 				 IsReadOnly="False"
 				 AcceptsReturn="True"
+				 IsHitTestVisible="True"
 				 AcceptsTab="True"
-				 VerticalScrollBarVisibility="Visible"
+				 VerticalScrollBarVisibility="Disabled"
 				TextChanged="Sourcefile_TextChanged"
+				SelectionBrush="OrangeRed"
 				 FontSize="18"
 				 HorizontalScrollBarVisibility="Visible"
 				 IsEnabled="True">
-
-				<!--<TextBox.Style>
+			<!--<TextBox.Style>
 			<Style TargetType="TextBox">
 				<Setter Property="Background" Value="{StaticResource White2}"/>
 				<Setter Property="Template">
@@ -101,6 +114,8 @@
 			</Style>
 			</TextBox.Style>-->
 			</TextBox>
+			</ScrollViewer>
+
 		</Border>
 
 		<TextBlock x:Name="infopanel1"
@@ -113,7 +128,7 @@
 			Height="25"
 			Background="{StaticResource Purple4}"
 			Foreground="{StaticResource White0}"			
-			Margin="10 0 0 30"/>
+			Margin="10 0 10 30"/>
 		<TextBlock x:Name="infopanel2"
 			Grid.Row="1"
 			Grid.Column="0"
@@ -124,7 +139,7 @@
 			Background="{StaticResource Purple4}"
 			Foreground="{StaticResource White0}"			
 		   Padding="10 0 0 0"
-			Margin="10 0 0 6"/>
+			Margin="10 0 10 6"/>
 
 		<CheckBox x:Name="WrapLines" 
 			Grid.Column="1"
@@ -261,9 +276,9 @@
 				Click="Nextfile_Click"
 				Grid.Row="1"
 				Grid.Column="1"
-				HorizontalAlignment="Center"
+				HorizontalAlignment="Right"
 				VerticalAlignment="Top"
-				Margin="0,30,6,0"
+				Margin="0,30,175,0"
 				Background="{StaticResource DiagonalBackgroundLightRed}"
 				Foreground="White"
 				FontSize="20" Width="50">

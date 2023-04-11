@@ -1,20 +1,10 @@
 ﻿using System;
-using System . Collections . Generic;
-using System . Diagnostics;
 using System . IO;
-using System . Linq;
-using System . Security . Cryptography . Xml;
-using System . Text;
-using System . Threading . Tasks;
 using System . Windows;
 using System . Windows . Controls;
-using System . Windows . Data;
-using System . Windows . Documents;
 using System . Windows . Input;
-using System . Windows . Markup;
 using System . Windows . Media;
-using System . Windows . Media . Imaging;
-using System . Windows . Shapes;
+
 
 namespace GetFilesBySelection
 {
@@ -30,11 +20,18 @@ namespace GetFilesBySelection
         private bool haslinenumbers { get; set; } = false;
         private string rootPath { get; set; } = "";
 
-        public FileBrowser ( string sourcefile )
+        public FileBrowser Filebrowser { get; set; }
+        public SearchWin Searchwin { get; set; }
+        public MainWindow Mainwindow { get; set; }
+
+        public FileBrowser ( MainWindow Mainwindow, string sourcefile )
         {
             InitializeComponent ( );
             filename = sourcefile;
             LoadFile (filename );
+            SetupWindowDrag ( this );
+            this.Filebrowser = this;
+            this . Mainwindow = Mainwindow;
         }
 
         private void LoadFile (string fileName )
@@ -72,6 +69,8 @@ private void CloseBtn_Click ( object sender , RoutedEventArgs e )
                 }
             }
             this . Close ( );
+            if ( Mainwindow . Searchwin != null )
+                Mainwindow . Searchwin . Close ( );
         }
 
         private void Dolineno_Click ( object sender , RoutedEventArgs e )
@@ -114,6 +113,7 @@ private void CloseBtn_Click ( object sender , RoutedEventArgs e )
             }
             haslinenumbers = true;
             Mouse . OverrideCursor = Cursors . Arrow;
+            IsDirty = false;
         }
         private void StripLineNumbers ( )
         {
@@ -130,6 +130,7 @@ private void CloseBtn_Click ( object sender , RoutedEventArgs e )
             DoLines . Background = FindResource ( "Green8" ) as SolidColorBrush;
             DoLines . Foreground = FindResource ( "Green8" ) as SolidColorBrush;
             haslinenumbers = false;
+            IsDirty = false;
         }
         private string TabsToSpaces ( string input , int spacesTouse  )
         {
@@ -178,8 +179,7 @@ private void CloseBtn_Click ( object sender , RoutedEventArgs e )
 
         private void Sourcefile_TextChanged ( object sender , TextChangedEventArgs e )
         {
-            if(IsLoaded == true)
-            
+            if(IsLoaded == true)            
                 IsDirty = true;
         }
 
@@ -211,6 +211,45 @@ private void CloseBtn_Click ( object sender , RoutedEventArgs e )
             LoadFile ( filename );
             if ( haslinenumbers )
                 AddLineNumbers ( );
+        }
+
+        private void Sourcefile_PreviewMouseRightButtonUp ( object sender , MouseButtonEventArgs e )
+        {
+            SearchWin sw = new (this.Mainwindow,  this);
+            sw . Show ( );
+            Mainwindow .Searchwin = sw;
+        }
+        public static void SetupWindowDrag ( Window inst )
+        {
+            try
+            {
+                //Handle the button NOT being the left mouse button
+                // which will crash the DragMove Fn.....
+                MouseButtonState mbs = Mouse . RightButton;
+                //Debug. WriteLine ( $"{mbs . ToString ( )}" );
+                if ( mbs == MouseButtonState . Pressed )
+                    return;
+                inst . MouseDown += delegate
+                {
+                    {
+#pragma warning disable CS0168 // The variable 'ex' is declared but never used
+                        try
+                        {
+                            inst?.DragMove ( );
+                        }
+                        catch ( Exception ex )
+                        {
+                            return;
+                        }
+#pragma warning restore CS0168 // The variable 'ex' is declared but never used
+                    }
+                };
+            }
+            catch ( Exception ex )
+            {
+                return;
+            }
+#pragma warning restore CS0168 // The variable 'ex' is declared but never used
         }
     }
 }

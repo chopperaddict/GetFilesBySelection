@@ -11,7 +11,7 @@
 		ShowActivated="True"
 		x:Name="scannermain"
 		Background="{StaticResource Black4}"
-        Title="Files Scanner  - Control System (by Ian Turner 4/2023)" Height="450" Width="1200" MinWidth="900">
+        Title="Files Scanner  - Control System (by Ian Turner 4/2023)" Height="650" Width="1000" MinWidth="900">
 	<Window.Resources>
 		
 		<!--#region Styles-->
@@ -344,7 +344,8 @@
 
 		<!--#region lower  left details-->
 		<CheckBox x:Name="DoSort" 
-				  Grid.Column="1"
+				  Grid.Column="0"
+				  Grid.ColumnSpan="2"
 				  Grid.Row="7"
 				  FontSize="20"
 				  Height="30"
@@ -352,8 +353,8 @@
 				 IsChecked="False"
 				 Click="DoSort_Click"
 				  Content="Sort Results"
-		  HorizontalAlignment="Right"
-		  Margin="0 5 180 0"/>
+		  HorizontalAlignment="Left"
+		  Margin="180 5 0 0"/>
 
 		<CheckBox x:Name="Showfullpath" 
 				  Grid.Column="0"
@@ -365,7 +366,7 @@
 				 Click="Showfull_Click"
 				  Content="Show Full Path"
 		  HorizontalAlignment="Left"
-		  Margin="110,18,0,12" Width="155"/>
+		  Margin="12,18,0,12" Width="155"/>
 		<!--#endregion lower left details-->
 
 		<!--#region  Right side-->
@@ -386,7 +387,7 @@
 		<!--#region buttons-->
 
 		<Button x:Name="ExecuteBtn" 
-				Content="Execute Scan"
+				Content="Scan Root"
 				Click="ExecuteBtn_Click"
 				Grid.Row="7"
 				Grid.Column="1"
@@ -398,7 +399,7 @@
 			<Button.Style>
 				<Style TargetType="Button">
 					<Setter Property="Background" Value="{StaticResource DiagonalBackgroundLightGreen}"/>
-					<Setter Property="Width" Value="155"/>
+					<Setter Property="Width" Value="125"/>
 					<Setter Property="Height" Value="45"/>
 					<Setter Property="Template">
 						<Setter.Value>
