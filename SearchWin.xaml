@@ -15,9 +15,9 @@
 		Topmost="True"
 		ShowInTaskbar="false"
 		AllowsTransparency="True">
-		<!--lower 3 lines - How to hide window frame "-->
-    <Grid>
-		
+	<!--lower 3 lines - How to hide window frame "-->
+	<Grid>
+
 		<!--#region grid setup-->
 		<Grid.RowDefinitions>
 			<RowDefinition Height="30"/>
@@ -57,8 +57,8 @@
 				 LostFocus="TextBox_LostFocus"
 				 Foreground="{StaticResource Black6}"
 			   VerticalAlignment="Top"/>
-				 <!--KeyDown="TextBox_KeyDown"-->
-				 <!--TextChanged="TextBox_TextChanged"-->
+		<!--KeyDown="TextBox_KeyDown"-->
+		<!--TextChanged="TextBox_TextChanged"-->
 
 		<!--#region buttons-->
 		<Button x:Name="SearchBtn" 
@@ -127,11 +127,11 @@
 					</Setter>
 				</Style>
 			</Button.Style>
-			
+
 		</Button>
 
 		<Button x:Name="prevBtn" 
-				Content="Previous"
+				Content="&lt; Previous"
 				Click="PrevBtn_Click"
 				Grid.Row="2"
 				Grid.Column="0"
@@ -140,7 +140,7 @@
 				VerticalAlignment="Bottom"
 				Margin="105,0,0,-20"
 				Background="{StaticResource DiagonalBackgroundLightGreen}"
-				Foreground="White"
+				Foreground="{StaticResource Yellow1}"
 				FontSize="20">
 			<Button.Style>
 				<Style TargetType="Button">
@@ -158,11 +158,11 @@
 											CornerRadius="8">
 									</Border>
 									<DockPanel Name="myContentPresenterDockPanel">
-										<ContentPresenter x:Name="myContentPresenter" Margin="12 8 0 0" 
-												TextBlock.FontSize="20"
+										<ContentPresenter x:Name="myContentPresenter" Margin="12 11 0 0" 
+												TextBlock.FontSize="18"
 												TextBlock.FontWeight="DemiBold"
 												Content="{TemplateBinding  Content}" 
-												TextBlock.Foreground="White" />
+												TextBlock.Foreground="{StaticResource Yellow1}" />
 									</DockPanel>
 								</Grid>
 								<ControlTemplate.Triggers>
@@ -200,16 +200,15 @@
 		</Button>
 
 		<Button x:Name="nextBtn" 
-				Content="Next"
+				Content="Next &gt;"
 				Click="NextBtn_Click"
 				Grid.Row="2"
-				Grid.Column="0"
-				Grid.ColumnSpan="2"
+				Grid.Column="1"
 				HorizontalAlignment="Left"
-				VerticalAlignment="Bottom"
-				Margin="215,0,0,-20"
+				VerticalAlignment="Top"
+				Margin="5,15,0,-20"
 				Background="{StaticResource DiagonalBackgroundLightGreen}"
-				Foreground="White"
+				Foreground="{StaticResource Yellow1}"
 				FontSize="20">
 			<Button.Style>
 				<Style TargetType="Button">
@@ -231,7 +230,7 @@
 												TextBlock.FontSize="20"
 												TextBlock.FontWeight="DemiBold"
 												Content="{TemplateBinding  Content}" 
-												TextBlock.Foreground="White" />
+												TextBlock.Foreground="{StaticResource Yellow1}" />
 									</DockPanel>
 								</Grid>
 								<ControlTemplate.Triggers>
@@ -239,7 +238,6 @@
 									<!-- Set properties when mouse pointer is over the button. -->
 									<Trigger Property="IsMouseOver" Value="True">
 										<Setter Property ="Rectangle.Stroke" TargetName="_border" Value="{StaticResource Blue4}" />
-										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
 										<Setter Property ="Background" TargetName="_border" Value="{StaticResource DiagonalBackgroundLightRed}" />
 										<Setter Property ="TextElement.Foreground" TargetName="myContentPresenter" Value="{StaticResource Orange4}" />
 
@@ -336,7 +334,7 @@
 				</Style>
 			</Button.Style>
 		</Button>
-		
+
 		<!--#endregion buttons-->
 
 	</Grid>

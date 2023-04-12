@@ -1,23 +1,12 @@
 ﻿using System;
 using System . Collections . Generic;
 using System . Diagnostics;
-using System . Diagnostics . Eventing . Reader;
 using System . IO;
 using System . Linq;
-using System . Text;
-using System . Threading . Tasks;
 using System . Windows;
 using System . Windows . Controls;
-using System . Windows . Data;
-using System . Windows . Documents;
 using System . Windows . Input;
-using System . Windows . Markup;
 using System . Windows . Media;
-using System . Windows . Media . Imaging;
-using System . Windows . Shapes;
-
-using SortSupportLib;
-
 namespace GetFilesBySelection
 {
     /// <summary>
@@ -25,14 +14,19 @@ namespace GetFilesBySelection
     /// </summary>
     public partial class SearchWin : Window
     {
+        #region  setup variables
+
+        private int totalOffset;
         private FileBrowser Filebrowser { get; set; }
         private MainWindow Mainwindow { get; set; }
         private int CurrentSearchLine { get; set; }
         private int CurrentSearchOffset { get; set; }
         private int Previoussearchoffset { get; set; }
-        private int CurrentOffsetCount { get; set; }
-        private string searchtext { get; set; } = "";
+        private int CurrentMatchedCount { get; set; }
+        private string searchText { get; set; } = "";
+        private string uSearchText { get; set; } = "";
 
+        #endregion setup variables
         public SearchWin ( MainWindow Mainwindow , FileBrowser Parent )
         {
             InitializeComponent ( );
@@ -41,15 +35,12 @@ namespace GetFilesBySelection
             Filebrowser = Parent;
             searchtxt . Focus ( );
         }
-
         private void CloseBtn_Click ( object sender , RoutedEventArgs e )
         {
             Filebrowser . Searchwin = null;
             Mainwindow . Searchwin = null;
             this . Close ( );
         }
-
-
         public static void SetupWindowDrag ( Window inst )
         {
             try
@@ -82,7 +73,6 @@ namespace GetFilesBySelection
             }
 #pragma warning restore CS0168 // The variable 'ex' is declared but never used
         }
-
         private void TextBox_TextChanged ( object sender , TextChangedEventArgs e )
         {
             TextBox tb = sender as TextBox;
@@ -99,6 +89,7 @@ namespace GetFilesBySelection
             }
         }
 
+        #region focus handlers
         private void TextBox_GotFocus ( object sender , RoutedEventArgs e )
         {
             TextBox tb = sender as TextBox;
@@ -121,141 +112,166 @@ namespace GetFilesBySelection
                 tb . FontWeight = FontWeight . FromOpenTypeWeight ( 300 );
             }
         }
+
+        #endregion focus handlers
+
+        #region Search methods
         private void Search_Click ( object sender , RoutedEventArgs e )
         {
             // WORKING WELL
-            CurrentOffsetCount = 0;
+            CurrentMatchedCount = 0;
             CurrentSearchLine = -1;
             CurrentSearchOffset = 0;
-            string txt = searchtxt . Text;
-            int offset = 0;
-            string outbuffer = Filebrowser . Sourcefile.Text.ToUpper();
+            searchText = searchtxt . Text;
+            uSearchText = searchtxt . Text . ToUpper ( );
+            if ( uSearchText == "Enter search text here ..." || uSearchText == "" )
+                return;
 
+            int offSet = 0;
+            string outbuffer = Filebrowser . Sourcefile . Text . ToUpper ( );
+            string [ ] splt = outbuffer . Split ( "\n" );
+            int totalNewLines = splt . Length; // 107 lines for full viewer text ??
+
+            Filebrowser . Sourcefile . IsReadOnly = true;
             Filebrowser . SourcefileScroller . ScrollToHome ( );
             Filebrowser . SourcefileScroller . UpdateLayout ( );
-            Filebrowser . Sourcefile . SelectedText = "";
-            Filebrowser . Sourcefile . SelectionLength = 0;
+            Filebrowser . Sourcefile . CaretIndex = 0;
+            //Filebrowser . Sourcefile . SelectedText = searchtxt.Text;
             Filebrowser . Sourcefile . SelectionStart = 0;
+            Filebrowser . Sourcefile . SelectionLength = 0;
             Filebrowser . Sourcefile . UpdateLayout ( );
-            searchtext = searchtxt . Text . ToUpper ( );
-
-            offset = outbuffer . IndexOf ( searchtext );
-            if ( offset > 0 )
-                CurrentSearchOffset = offset;
+            offSet = outbuffer . IndexOf ( uSearchText );
+            if ( offSet <= 0 )
+                return;
+            // highlight selected text in main viewer window
+            Filebrowser . Sourcefile . SelectionStart = offSet;
+            CurrentSearchOffset = offSet;
+            Filebrowser . Sourcefile . SelectionLength = searchText . Length;
+            // Load data from 0 to x (match start position) with "\n" - NB offset is START of that Line ??
+            splt = outbuffer . Substring ( 0 , offSet ) . Split ( "\n" );
+            totalNewLines = splt . Length; // 9 for 1st search ??
+            if ( offSet > 0 )
+                CurrentSearchOffset = offSet;
             else
             {
                 MainWindow . PlayErrorBeep ( );
                 return;
             }
-
-            if ( offset > -1 )
+            // scroll the viewer down to show selection
+            for ( int x = 0 ; x <= totalNewLines ; x++ )
             {
-                Filebrowser . Sourcefile . SelectionStart = offset;
-                CurrentSearchOffset = offset;
-                Filebrowser . Sourcefile . SelectionLength = searchtext . Length;
-
-                CurrentOffsetCount++;
-                // read SourceText in as lines
-                string [ ] data = Filebrowser . Sourcefile . Text . ToUpper ( ) . Split ( "\n" );
-                // search for 1st match
-                int line = -1;
-
+                //outbuffer += data [ x ];
                 Filebrowser . SourcefileScroller . LineDown ( );
-                Filebrowser . SourcefileScroller . LineDown ( );
-                for ( int x = 0 ; x < data . Length ; x++ )
-                {
-                    outbuffer += data [ x ];
-                    Filebrowser . SourcefileScroller . LineDown ( );
-                    Filebrowser . Sourcefile . UpdateLayout ( );
-
-                    if ( data [ x ] . ToUpper ( ) . Contains ( searchtext ) == true )
-                    {
-                        line = x;
-                        break;
-                    }
-                    else
-                        line = x;
-                }
                 Filebrowser . Sourcefile . UpdateLayout ( );
-
-                // Scroll viewer down to show match found line
-                if ( line > -1 )
-                {
-                    // Store currentv line for prev/next operations
-                    CurrentSearchLine = line;
-                    Filebrowser . Sourcefile . SelectionStart = offset;
-                    CurrentSearchOffset = offset;
-                    Filebrowser . Sourcefile . SelectionLength = searchtext . Length;
-                }
+            }
+            if ( offSet > -1 )
+            {
+                CurrentMatchedCount++;
             }
             Filebrowser . Focus ( );
-            CurrentOffsetCount = 1;
-        }
+            Filebrowser . Sourcefile . IsReadOnly = false;
 
+            CurrentMatchedCount = 1;
+        }
         private void NextBtn_Click ( object sender , RoutedEventArgs e )
         {
-            if ( CurrentOffsetCount < 1 )
+            // Find NEXT match - if any
+            
+            // TODO - handle when we hit last match properly
+            
+            if ( CurrentMatchedCount < 1 )
                 return;
-            else
-                CurrentSearchOffset += 1;   // move search text pointer fwd 1 character so we do NOT find original item
+            searchText = searchtxt . Text;
+            uSearchText = searchtxt . Text . ToUpper ( );
+            int currentMatch = Filebrowser . Sourcefile . SelectionStart;
+            if ( currentMatch > 0 )
+                CurrentSearchOffset = currentMatch;
+            Filebrowser . Sourcefile . CaretIndex = 0;
 
-            int currentmatch = Filebrowser . Sourcefile . SelectionStart;
-            if ( currentmatch > 0 )
-            {
-                CurrentSearchOffset = currentmatch + 1;
-                Filebrowser . Sourcefile . SelectionStart = 0;
-                Filebrowser . Sourcefile . SelectionLength = 0;
-            }
+            // scroll to top of scrollviewer again
             Filebrowser . SourcefileScroller . ScrollToHome ( );
             Filebrowser . Sourcefile . UpdateLayout ( );
 
-            // re-read data from TextBox control.Text
-            string outbuffer = Filebrowser . Sourcefile . Text . ToUpper ( );
-            // read Sourcefile in, but as lines
-            string [ ] data = Filebrowser . Sourcefile . Text . ToUpper ( ) . Split ( "\n" );
+            // re-read ALL data from TextBox control.Text
+            string fullbuff = Filebrowser . Sourcefile . Text;  // std case version 
+            string uOutBuffer = Filebrowser . Sourcefile . Text . ToUpper ( );  // uppercase version 
+            string tempOutBuffer = "";  //built as we  search, line by line
 
-            // Search forward - from start, but for the next match 
-            int newoffset = CurrentSearchOffset;
-            bool found = false;
-            int offset = outbuffer . Substring ( newoffset ) . IndexOf ( searchtext );
+            // Search forward - from start, but for the next match identified by CurrentMatchedCount.
+            int offSet = 0, newOffset = 0;
+            CurrentMatchedCount++;
+            for ( int i = 0 ; i < CurrentMatchedCount ; i++ )
             {
-                newoffset += offset;
-                Filebrowser . Sourcefile . SelectionStart = newoffset;
-                Filebrowser . Sourcefile . SelectionLength = searchtext . Length;
-                //increment our total searches position
-                CurrentOffsetCount++;
-                // save latest match starting position 
-                CurrentSearchOffset = newoffset;
-                found = true;
+                offSet = uOutBuffer . Substring ( totalOffset , uOutBuffer . Length - ( totalOffset ) ) . IndexOf ( uSearchText );
+                if ( i == 0 )
+                    totalOffset += offSet;
+                else
+                    totalOffset += offSet - 1;
+                newOffset = offSet + 1;
+                continue;
             }
-            if ( found == false )
-                return;
-            // Now scroll it into view
-            outbuffer = "";
-            for ( int x = 0 ; x < data . Length ; x++ )
+            totalOffset += 1;
+
+            List<int> cumulativeMatch = new ( );
+            string allMatchingData = "";
+            int linesCounter = 0, cumulativeLines = 0, matchCounter = 0;
+
+            string [ ] allLines = uOutBuffer . Split ( "\n" );
+            for ( int x = 0 ; x < allLines . Length ; x++ )
             {
-                // Add all data to new buffer
-                outbuffer += data [ x ];
-                // Have we passed the previous match ??
-                if ( outbuffer . Length < CurrentSearchOffset )
+                if ( allLines [ x ] . Contains ( uSearchText ) == false )
                 {
-                    // scroll down to new matching line - line by line
-                    Filebrowser . SourcefileScroller . LineDown ( );
-                    Filebrowser . SourcefileScroller . UpdateLayout ( );
-                    Filebrowser . Sourcefile . UpdateLayout ( );
+                    // NO match in this line
+                    cumulativeLines++;
+                    cumulativeMatch . Add ( allLines [ x ] . Length + 1 );
+                    tempOutBuffer += allLines [ x ] + "\n";
+                    allMatchingData += tempOutBuffer;
+                    linesCounter++;
+                }
+                else
+                {
+                    // FOUND a match in this line
+                    cumulativeLines++;
+                    int partMatch = allLines [ x ] . IndexOf ( uSearchText );
+                    tempOutBuffer += allLines [ x ] + "\n";
+                    allMatchingData += tempOutBuffer;
+                    linesCounter++;
+                    matchCounter++;
+                    if ( matchCounter == CurrentMatchedCount )
+                    {
+                        // last match, so we have all the data
+                        cumulativeMatch . Add ( partMatch );
+                        break;
+                    }
+                    else
+                    {
+                        cumulativeMatch . Add ( allLines [ x ] . Length + 1 );
+                    }
                 }
             }
-            Filebrowser . SourcefileScroller . LineDown ( );
-            Filebrowser . SourcefileScroller . UpdateLayout ( );
-            Filebrowser . SourcefileScroller . LineDown ( );
-            Filebrowser . SourcefileScroller . UpdateLayout ( );
-            //Filebrowser . Sourcefile . UpdateLayout ( );
-            //Filebrowser . SourcefileScroller . UpdateLayout ( );
+            int fullOffset = 0;
+            for ( int i = 0 ; i < cumulativeMatch . Count ; i++ )
+            {
+                fullOffset += cumulativeMatch [ i ];
+            }
+            //increment our total searches performed position - looking good.
+            string [ ] linestomatch = new string [ 1 ];
+            Filebrowser . Sourcefile . SelectionStart = fullOffset;
+            Filebrowser . Sourcefile . CaretIndex = fullOffset;
+            Filebrowser . Sourcefile . SelectionLength = searchText . Length;
+            for ( int x = 0 ; x <= cumulativeLines ; x++ )
+            {
+                // scroll down to matching line - line by line
+                Filebrowser . SourcefileScroller . LineDown ( );
+                Filebrowser . SourcefileScroller . UpdateLayout ( );
+                Debug . WriteLine ( $"{x}" );
+            }
+
             Filebrowser . Focus ( );
         }
         private void PrevBtn_Click ( object sender , RoutedEventArgs e )
         {
-            if ( CurrentOffsetCount < 2 )
+            if ( CurrentMatchedCount < 2 )
                 return;
 
             int currentmatch = Filebrowser . Sourcefile . SelectionStart;
@@ -268,49 +284,42 @@ namespace GetFilesBySelection
 
             Filebrowser . SourcefileScroller . ScrollToHome ( );
             Filebrowser . Sourcefile . UpdateLayout ( );
-
-           //currentmatch = Filebrowser . Sourcefile . SelectionStart;
-            //if ( currentmatch > 0 )
-            //{
-            //    CurrentSearchOffset = currentmatch - 1;
-            //}
+            Filebrowser . Sourcefile . CaretIndex = 0;
             Filebrowser . SourcefileScroller . ScrollToHome ( );
             Filebrowser . SourcefileScroller . UpdateLayout ( );
             Filebrowser . Sourcefile . UpdateLayout ( );
 
             // re-read data from TextBox control.Text
-            string outbuffer = Filebrowser . Sourcefile . Text . ToUpper ( ) . Substring ( 0 , CurrentSearchOffset - searchtext . Length );
+            string outbuffer = Filebrowser . Sourcefile . Text . ToUpper ( ) . Substring ( 0 , CurrentSearchOffset - searchText . Length );
             int offset = 0;
             bool found = false;
             // Find last previous match
-            offset = outbuffer . LastIndexOf ( searchtext );
+            offset = outbuffer . LastIndexOf ( searchText );
             if ( offset > 0 )
             {
                 Filebrowser . Sourcefile . SelectionStart = offset;
-                Filebrowser . Sourcefile . SelectionLength = searchtext . Length;
+                Filebrowser . Sourcefile . SelectionLength = searchText . Length;
                 found = true;
                 CurrentSearchOffset = offset;
                 Previoussearchoffset = offset;
-                // outbuffer = outbuffer.Substring ( 0, offset- searchtext . Length );
                 ScrollLineIntoView ( outbuffer );
                 Filebrowser . SourcefileScroller . LineDown ( );
                 Filebrowser . SourcefileScroller . UpdateLayout ( );
                 Filebrowser . SourcefileScroller . LineDown ( );
                 Filebrowser . SourcefileScroller . UpdateLayout ( );
-                return;
+                //return;
             }
             else
             {
                 Filebrowser . Sourcefile . SelectionStart = Previoussearchoffset;
-                Filebrowser . Sourcefile . SelectionLength = searchtext . Length;
+                Filebrowser . Sourcefile . SelectionLength = searchText . Length;
                 ScrollLineIntoView ( outbuffer );
-//                MainWindow . PlayErrorBeep ( );
                 return;
             }
             if ( found == true )
             {
                 Filebrowser . Sourcefile . SelectionStart = Previoussearchoffset;
-                Filebrowser . Sourcefile . SelectionLength = searchtext . Length;
+                Filebrowser . Sourcefile . SelectionLength = searchText . Length;
             }
             else
             {
@@ -323,6 +332,15 @@ namespace GetFilesBySelection
             Filebrowser . SourcefileScroller . UpdateLayout ( );
             Filebrowser . Focus ( );
         }
+        private void SearchBtn_KeyDown ( object sender , KeyEventArgs e )
+        {
+            if ( e . Key == Key . Enter )
+                Search_Click ( sender , null );
+        }
+
+        #endregion Search methods
+
+        #region Utility Methods
         private void ScrollLineIntoView ( string buffer )
         {
             Filebrowser . SourcefileScroller . ScrollToHome ( );
@@ -335,12 +353,6 @@ namespace GetFilesBySelection
                 Filebrowser . SourcefileScroller . UpdateLayout ( );
             }
         }
-
-        private void SearchBtn_KeyDown ( object sender , KeyEventArgs e )
-        {
-            if ( e . Key == Key . Enter )
-                Search_Click ( sender , null );
-        }
         private string CreateTempFile ( string filepath )
         {
             if ( filepath . EndsWith ( "\\" ) == false )
@@ -349,6 +361,9 @@ namespace GetFilesBySelection
             File . WriteAllText ( filepath , Filebrowser . Sourcefile . Text );
             return filepath;
         }
+
+        #endregion Utility Methods
+
     }
 }
 

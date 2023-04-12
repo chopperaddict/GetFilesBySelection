@@ -287,22 +287,20 @@
 
     <!--Background for Black /Red Diagonal  buttons-->
     <LinearGradientBrush x:Key="DiagonalBackgroundLightRed"
-			StartPoint="0.4 0" EndPoint="0.5 1">
+			StartPoint="0.0 0" EndPoint="0.8 1">
         <GradientStop Offset="0" Color="#FF000000" />
-        <GradientStop Offset="4" Color="#FF000000" />
+		<GradientStop Offset="4" Color="#FF00AA00" />
         <GradientStop Offset="0.5" Color="{DynamicResource ClrRed5}" />
-        <!--<GradientStop Offset="0.5" Color="#FF9C700A" />-->
-        <GradientStop Offset="6" Color="#FF000000" />
+		<GradientStop Offset="6" Color="#FF00AA00" />
         <GradientStop Offset="1" Color="#FF000000" />
     </LinearGradientBrush>
 
     <!--Background for Black /Green Diagonal  buttons-->
     <LinearGradientBrush x:Key="DiagonalBackgroundLightGreen"
-			StartPoint="0.4 0" EndPoint="0.5 1">
+			StartPoint="0.0 0" EndPoint="0.8 1">
         <GradientStop Offset="0" Color="#FF000000" />
         <GradientStop Offset="4" Color="#FF000000" />
         <GradientStop Offset="0.5" Color="{DynamicResource ClrGreen8}" />
-        <!--<GradientStop Offset="0.5" Color="#FF9C700A" />-->
         <GradientStop Offset="6" Color="#FF000000" />
         <GradientStop Offset="1" Color="#FF000000" />
     </LinearGradientBrush>

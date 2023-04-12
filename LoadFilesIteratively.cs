@@ -14,25 +14,35 @@ using SortSupportLib;
 
 namespace GetFilesBySelection
 {
+    /// <summary>
+    /// Class that handles the loadinng of scan results, including Itertive WalkTree
+    /// </summary>
     public class LoadFilesIteratively
     {
         public static bool DOSTOP = false;
         public const bool DOFILEPROCESSING = false;
+
+        #region Event handlers
 
         // define the delegate handler signature and the event that will be raised
         // to send the change of directory being searched so mainwindow can update panel
         public delegate void UpdateDirlistingHandler ( object sender , UpdateArgs args );
 
         public static event EventHandler<UpdateArgs>? UpdateDirList;
+        private void DoUpdateDir ( UpdateArgs args )
+        {
+            throw new NotImplementedException ( );
+        }
 
-        public static List<string> duplicates = new ( );
-        /// public event UpdateDirlistingHandler UpdateDirList;
-        //public event EventHandler? UpdateDirList;
+        #endregion Event handlers
+
         protected virtual void OnUpdateDirList ( object sender , UpdateArgs args )
         {
             if ( UpdateDirList != null )
                 UpdateDirList ( sender , args );
         }
+
+        public static List<string> duplicates = new ( );
 
         #region setup
 #pragma warning disable CA2211
@@ -77,7 +87,7 @@ namespace GetFilesBySelection
         public static List<string> FullPathFileNameList { get; set; } = new ( );
         public static string [ ] AllFileNames = new string [ 1000 ];
         public static List<string> FullfilesList { get; set; } = new List<string> ( );
-//        public static List<string> FulldirectoriesList { get; set; } = new List<string> ( );
+        //        public static List<string> FulldirectoriesList { get; set; } = new List<string> ( );
         public static string? buffer { get; set; }
 
         public static string defaultsuffix = "*.cs";
@@ -118,14 +128,127 @@ namespace GetFilesBySelection
 
         #endregion  setup
 
-        private void DoUpdateDir ( UpdateArgs args )
-        {
-            throw new NotImplementedException ( );
-        }
-
         public static void DoQuit ( )
         {
             DOSTOP = true;
+        }
+
+        public int WalkDirectoryTree ( DirectoryInfo root , string filetype , ref int totalfiles , string [ ] blockdirs )
+        {
+            // root will be changed when it is called iteratively
+            int filesindex = 0;
+            bool isok = true;
+            string filespec = "";
+            FileInfo [ ] files = new FileInfo [ 1 ];
+            DirectoryInfo [ ] subDirs = new DirectoryInfo [ 1 ];
+            filespec = filetype;
+            if ( filespec == "" )
+                return 0;
+            // First, process all the files directly under this folder
+            // or the  current folder when iterating
+            try
+            {
+                int counter = 0;
+                files = root . GetFiles ( filespec );
+
+                Debug . WriteLine ( $"Parsing {root} for {filespec}..." );
+                //           Debug . Assert ( root . FullName.Contains ( "Batchfiles" ) == false);
+                foreach ( FileInfo item in files )
+                {
+                    isok = true;
+                    if ( DOSTOP == true ) break;
+                    if ( blockdirs != null )
+                    {
+                        for ( int y = 0 ; y < blockdirs . Length ; y++ )
+                        {
+                            // check block file 1st
+                            if ( item . Name . ToUpper ( ) . Contains ( blockdirs [ y ] ) == false )
+                            {
+                                // Check for duplicates
+                                counter = AddFilesToList ( item . FullName , ref filesindex );
+                                MainWindow . fileList . Items . Add ( item . FullName );
+                                MainWindow . fileList . SelectedIndex = MainWindow . fileList . Items . Count - 1;
+                                MainWindow . fileList . UpdateLayout ( );
+                                totalfiles += counter;
+                            }
+                            else
+                                Debug . WriteLine ( $"Duplicate found : {item . FullName}" );
+                        }
+                    }
+                    else
+                    {
+                        counter = AddFilesToList ( item . FullName , ref filesindex );
+                        totalfiles += counter;
+                    }
+                }
+            }
+            // This is thrown if even one of the files requires permissions greater
+            // than the application provides.
+            catch ( UnauthorizedAccessException e )
+            {
+                // This code just writes out the message and continues to recurse.
+                // You may decide to do something different here. For example, you
+                // can try to elevate your privileges and access the file again.
+                Debug . WriteLine ( $"\nERROR  426 : {e . Message}" );
+            }
+
+            catch ( DirectoryNotFoundException e )
+            {
+                Debug . WriteLine ( "\nERROR 431 : {e . Message}" );
+            }
+            // We have a set of matching files from the root folder or currently activate subfolder,
+            // so now find all the subdirectories under this directory.
+            try
+            {
+                subDirs = root . GetDirectories ( );
+                DirectoryCount += subDirs . Length;
+                string [ ] AllDirs = StripBlockedFolders ( subDirs , blockdirs );
+
+                for ( int x = 0 ; x < subDirs . Length ; x++ )
+                {
+                    DirectoryInfo dirinfo = subDirs [ x ];
+                    string dirs = dirinfo . FullName . ToUpper ( );
+                    if ( DOSTOP == true ) break;
+
+                    if ( isValidDir ( dirs , AllDirs ) )
+                    {
+                        //trigger event
+                        if ( UpdateDirList != null )
+                        {
+
+                            UpdateArgs mea = new UpdateArgs ( );
+                            mea . dirname = dirs;
+                            UpdateDirList ( this , mea );
+                        }
+                        //Task task = Task . Run ( ( ) =>
+                        //{
+                        //Application . Current . Dispatcher . Invoke ( ( ) =>
+                        //{
+                        MainWindow . panelinfo . Text = dirs;
+                        MainWindow . panelinfo . UpdateLayout ( );
+                        MainWindow . fileList . Items . Add ( dirs );
+                        //} );
+                        //} );
+
+
+                        //UpdateArgs mea = new UpdateArgs ( );
+                        //mea . dirname = dirs;
+                        // UpdateDirList ( this , mea );
+                        //}
+                        MainWindow . FulldirectoriesList . Add ( dirs );
+                        MainWindow . fileList . UpdateLayout ( );
+
+                        //****************************************************//
+                        // Iterate around again
+                        int totfiles = 0;
+                        WalkDirectoryTree ( dirinfo , filetype , ref totfiles , blockdirs );
+                        //****************************************************//
+                    }
+                }
+            }
+            catch ( Exception ex )
+            { Debug . WriteLine ( $"!!  {ex . Message}" ); }
+            return totalfiles;
         }
         public string [ ] GetSelectedFilesList ( string [ ] srchtext , TextBlock infopanel , string [ ] args )
         {
@@ -265,7 +388,7 @@ namespace GetFilesBySelection
 
             //LoadFilesIteratively lf = new ( );
             FullPathFileNameList . Clear ( );
-            MainWindow.FulldirectoriesList . Clear ( );
+            MainWindow . FulldirectoriesList . Clear ( );
             Mouse . OverrideCursor = Cursors . Wait;
 
             //Task task = Task . Run ( ( ) =>
@@ -314,7 +437,6 @@ namespace GetFilesBySelection
             Mouse . OverrideCursor = Cursors . Arrow;
             return sorting;
         }
-
         public List<string> LoadAllFiles ( string outpath , string rootpath , string [ ] validtypes , string [ ] blockdirs )
         {
             int TotalFiles = 0, linescounter = 0;
@@ -411,168 +533,7 @@ namespace GetFilesBySelection
             #endregion setup2
         }
 
-        public int WalkDirectoryTree ( DirectoryInfo root , string filetype , ref int totalfiles , string [ ] blockdirs )
-        {
-            // root will be changed when it is called iteratively
-            int filesindex = 0;
-            string filespec = "";
-            FileInfo [ ] files = new FileInfo [ 1 ];
-            DirectoryInfo [ ] subDirs = new DirectoryInfo [ 1 ];
-            filespec = filetype;
-            if ( filespec == "" )
-                return 0;
-            // First, process all the files directly under this folder
-            // or the  current folder when iterating
-            try
-            {
-                bool isok = true;
-                int counter = 0;
-                files = root . GetFiles ( filespec );
-
-                Debug . WriteLine ( $"Parsing {root} for {filespec}..." );
-     //           Debug . Assert ( root . FullName.Contains ( "Batchfiles" ) == false);
-                foreach ( FileInfo item in files )
-                {
-                    isok = true;
-                    if ( DOSTOP == true ) break;
-                    if ( blockdirs != null )
-                    {
-                        for ( int y = 0 ; y < blockdirs . Length ; y++ )
-                        {
-                            // check block file 1st
-                            if ( item . Name . ToUpper ( ) . Contains ( blockdirs [ y ] ) == false )
-                            {
-                                // Check for duplicates
-                                //string balname = "..." + item . FullName . Substring ( RootPath . Length + 3 );
-                                counter = AddFilesToList ( item . FullName , ref filesindex );
-                                MainWindow . fileList . Items . Add ( item . FullName );
-                                MainWindow . fileList . SelectedIndex = MainWindow . fileList . Items . Count - 1;
-                                MainWindow . fileList . UpdateLayout ( );
-                                totalfiles += counter;
-                            }
-                            else
-                                Debug . WriteLine ( $"Duplicate found : {item . FullName}" );
-                        }
-                    }
-                    else
-                    {
-                        //string balname = "..." + item . FullName . Substring ( RootPath . Length + 3 );
-                        counter = AddFilesToList ( item . FullName , ref filesindex );
-                        totalfiles += counter;
-                    }
-                }
-            }
-            // This is thrown if even one of the files requires permissions greater
-            // than the application provides.
-            catch ( UnauthorizedAccessException e )
-            {
-                // This code just writes out the message and continues to recurse.
-                // You may decide to do something different here. For example, you
-                // can try to elevate your privileges and access the file again.
-                Debug . WriteLine ( $"\nERROR  426 : {e . Message}" );
-            }
-
-            catch ( DirectoryNotFoundException e )
-            {
-                Debug . WriteLine ( "\nERROR 431 : {e . Message}" );
-            }
-
-            //if ( files != null && files . Length > 0 )
-            //{
-            //    try
-            //    {
-            //        int counter = AddFilesToList ( files , ref filesindex );
-
-            //        Debug . WriteLine ( $"{files . Length} files added to lists" );
-            //        // we have 86 files  for wpfmain
-            //        if ( DOSTOP == false )
-            //        {
-            //            if ( CreateIterativeReport )
-            //            {
-            //                foreach ( FileInfo fi in files )
-            //                {
-
-            //                    // If we want to open, delete or modify the file, then
-            //                    // thea try-catch block is required here to handle the case
-            //                    // where the file has been deleted since the call to TraverseTree().
-
-            //                    string Files = fi . FullName . ToUpper ( );
-            //                    if ( Files . Contains ( ".G.CS" ) || Files . Contains ( "ASSEMBLY" ) )
-            //                        continue;
-            //                    else
-            //                    {
-            //                        FullfilesList . Add ( fi . FullName );
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //    catch ( Exception ex )
-            //    {
-            //        //Add entry to Error Tuple collection 
-            //        //Tuple<int , string , string> t = Tuple . Create ( -1 , pathfilename , $"\n{ex . Message}" );
-            //        //Program . DebugErrors . Add ( t );
-            //        Debug . WriteLine ( $"\nERROR Program 724, \n{ex . Message}" );
-            //        TotalExErrors++;
-            //    }
-            //    if ( DOSTOP == true )
-            //        return totalfiles;
-
-            // We have a set of matching files from the root folder or currently activate subfolder,
-            // so now find all the subdirectories under this directory.
-            try
-            {
-                subDirs = root . GetDirectories ( );
-                DirectoryCount += subDirs . Length;
-                string [ ] AllDirs = StripBlockedFolders ( subDirs , blockdirs );
-//                foreach ( DirectoryInfo dirinfo in subDirs )
-                    for(int x = 0 ; x< subDirs .Length ;x++ )
-                    {
-                    DirectoryInfo dirinfo = subDirs [ x ];
-                    string dirs = dirinfo . FullName . ToUpper ( );
-                    if ( DOSTOP == true ) break;
-
-                    if ( isValidDir ( dirs , AllDirs ) )
-                    {
-                        //trigger event
-                        if ( UpdateDirList != null )
-                        {
-
-                            UpdateArgs mea = new UpdateArgs ( );
-                            mea . dirname = dirs;
-                            UpdateDirList ( this , mea );
-                        }
-                        //Task task = Task . Run ( ( ) =>
-                        //{
-                        //Application . Current . Dispatcher . Invoke ( ( ) =>
-                        //{
-                        MainWindow . panelinfo . Text = dirs;
-                        MainWindow . panelinfo . UpdateLayout ( );
-                        MainWindow . fileList . Items . Add ( dirs );
-                        //} );
-                        //} );
-
-
-                        //UpdateArgs mea = new UpdateArgs ( );
-                        //mea . dirname = dirs;
-                        // UpdateDirList ( this , mea );
-                        //}
-                        MainWindow . FulldirectoriesList . Add ( dirs );
-                        MainWindow . fileList . UpdateLayout ( );
-
-                        //****************************************************//
-                        // Iterate around again
-                        int totfiles = 0;
-                        WalkDirectoryTree ( dirinfo , filetype , ref totfiles , blockdirs );
-                        //****************************************************//
-                    }
-                }
-            }
-            catch ( Exception ex )
-            { Debug . WriteLine ( $"!!  {ex . Message}" ); }
-            return totalfiles;
-        }
-
+        #region Utility methods
         private static bool Checkforduplicatefile ( string fname )
         {
             int rootlength = RootPath . Length;
@@ -653,7 +614,6 @@ namespace GetFilesBySelection
             // return list of valid subfolders (checked against blockdirs)
             return goodirs;
         }
-
         private static int AddFilesToList ( string filename , ref int filesindex )
         {
             int counter = 0;
@@ -743,6 +703,9 @@ namespace GetFilesBySelection
 #pragma warning disable CA1822
         // Called iteratively by LoadAllFiles() main calling method
         // receives root directory, a file type from [], blockfolders []
+
+        #endregion Utility methods
+
         public int DoLoadAllFiles ( string RootPath , string filetype , string [ ] blockdirs )
         {
             int totfiles = 0, totalfiles = 0;

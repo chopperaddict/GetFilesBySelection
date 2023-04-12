@@ -30,12 +30,12 @@ namespace GetFilesBySelection
         public static bool Showfull = false;
         public bool ISLOADING = true;
         public bool DOPAUSE { get; set; } = false;
-        public static List<string> FulldirectoriesList { get; set; } = new List<string> ( );
-        public static ListBox fileslistbox { get; set; }
+        public static List<string>? FulldirectoriesList { get; set; } = new List<string> ( );
+        public static ListBox? fileslistbox { get; set; }
         public static string Rootpath { get; set; }
-        public FileBrowser Filebrowser { get; set; }
-        public SearchWin Searchwin { get; set; }
-        public MainWindow Mainwindow { get; set; }
+        public FileBrowser?  Filebrowser { get; set; }
+        public SearchWin? Searchwin { get; set; }
+        public MainWindow ? Mainwindow { get; set; }
 
         //
         #region PropertyChanged
